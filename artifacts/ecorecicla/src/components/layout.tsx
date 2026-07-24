@@ -14,7 +14,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Leaf,
-  Settings
+  Settings,
+  ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -23,6 +24,7 @@ import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ROLE_LABELS } from "@/lib/utils-eco";
 import { cn } from "@/lib/utils";
+import { NotificationsDropdown } from "@/components/notifications-dropdown";
 
 const NAV_SECTIONS = [
   {
@@ -43,6 +45,15 @@ const NAV_SECTIONS = [
     ]
   }
 ];
+
+// Admin-only section
+const ADMIN_SECTION = {
+  label: "Sistema",
+  items: [
+    { href: "/settings", label: "Configuración", icon: Settings },
+    { href: "/audit-log", label: "Auditoría", icon: ShieldCheck },
+  ]
+};
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
@@ -68,6 +79,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   const isActive = (href: string) =>
     location === href || (href !== "/dashboard" && location.startsWith(href + "/"));
+
+  const isAdmin = user?.role === "admin";
 
   const SidebarNavItem = ({ item, collapsed: col }: { item: typeof NAV_SECTIONS[0]["items"][0], collapsed: boolean }) => {
     const active = isActive(item.href);
@@ -157,12 +170,31 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         ))}
+
+        {/* Admin-only: Sistema section */}
+        {isAdmin && (
+          <div>
+            {!col && (
+              <p className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/35 select-none">
+                {ADMIN_SECTION.label}
+              </p>
+            )}
+            <div className={cn("space-y-0.5", col && "flex flex-col items-center gap-0.5")}>
+              {ADMIN_SECTION.items.map(item => (
+                <SidebarNavItem key={item.href} item={item} collapsed={col} />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Bottom: User + profile + logout */}
+      {/* Bottom: Notifications + User + profile + logout */}
       <div className={cn("border-t border-sidebar-border py-3 shrink-0", col ? "px-2" : "px-3")}>
         {col ? (
           <div className="flex flex-col items-center gap-2">
+            {/* Notifications */}
+            <NotificationsDropdown collapsed={true} />
+
             <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>
                 <Link href="/profile">
@@ -206,6 +238,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 </p>
               </div>
             </div>
+            {/* Notifications row */}
+            <NotificationsDropdown collapsed={false} />
             <Link href="/profile" className="block" onClick={() => setMobileMenuOpen(false)}>
               <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors">
                 <UserCircle className="w-4 h-4 shrink-0" /> Mi Perfil

@@ -8,6 +8,7 @@ import {
   GetMeResponse,
   LoginResponse,
 } from "@workspace/api-zod";
+import { logAudit } from "../audit";
 
 const router: IRouter = Router();
 const JWT_SECRET = process.env.SESSION_SECRET || "ecorecicla-secret-2024";
@@ -69,6 +70,9 @@ router.post("/auth/login", async (req, res): Promise<void> => {
     photoUrl: user.photoUrl,
     createdAt: user.createdAt.toISOString(),
   };
+
+  await logAudit({ userId: user.id, userFullName: user.fullName, action: "login", resource: "auth", details: `Inicio de sesión: ${user.email}` });
+
   res.json(LoginResponse.parse({ user: responseUser, token }));
 });
 

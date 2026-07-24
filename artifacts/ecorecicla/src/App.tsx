@@ -13,89 +13,39 @@ import Events from '@/pages/events';
 import Records from '@/pages/records';
 import Reports from '@/pages/reports';
 import Profile from '@/pages/profile';
+import Settings from '@/pages/settings';
+import AuditLog from '@/pages/audit-log';
 
 import { ProtectedRoute } from '@/components/protected-route';
 import { Layout } from '@/components/layout';
 
 const queryClient = new QueryClient();
 
+function LayoutRoute({ component: Component }: { component: React.ComponentType }) {
+  return (
+    <ProtectedRoute>
+      <Layout>
+        <Component />
+      </Layout>
+    </ProtectedRoute>
+  );
+}
+
 function Router() {
   return (
     <Switch>
       <Route path="/login" component={Login} />
-      
-      <Route path="/">
-        <ProtectedRoute>
-          <Layout>
-            <Dashboard />
-          </Layout>
-        </ProtectedRoute>
-      </Route>
-
-      <Route path="/dashboard">
-        <ProtectedRoute>
-          <Layout>
-            <Dashboard />
-          </Layout>
-        </ProtectedRoute>
-      </Route>
-
-      <Route path="/users">
-        <ProtectedRoute>
-          <Layout>
-            <Users />
-          </Layout>
-        </ProtectedRoute>
-      </Route>
-
-      <Route path="/complexes">
-        <ProtectedRoute>
-          <Layout>
-            <Complexes />
-          </Layout>
-        </ProtectedRoute>
-      </Route>
-
-      <Route path="/materials">
-        <ProtectedRoute>
-          <Layout>
-            <Materials />
-          </Layout>
-        </ProtectedRoute>
-      </Route>
-
-      <Route path="/events">
-        <ProtectedRoute>
-          <Layout>
-            <Events />
-          </Layout>
-        </ProtectedRoute>
-      </Route>
-
-      <Route path="/records">
-        <ProtectedRoute>
-          <Layout>
-            <Records />
-          </Layout>
-        </ProtectedRoute>
-      </Route>
-
-      <Route path="/reports">
-        <ProtectedRoute>
-          <Layout>
-            <Reports />
-          </Layout>
-        </ProtectedRoute>
-      </Route>
-
-      <Route path="/profile">
-        <ProtectedRoute>
-          <Layout>
-            <Profile />
-          </Layout>
-        </ProtectedRoute>
-      </Route>
-
+      <Route path="/">           <LayoutRoute component={Dashboard} /></Route>
+      <Route path="/dashboard">  <LayoutRoute component={Dashboard} /></Route>
+      <Route path="/users">      <LayoutRoute component={Users} /></Route>
+      <Route path="/complexes">  <LayoutRoute component={Complexes} /></Route>
+      <Route path="/materials">  <LayoutRoute component={Materials} /></Route>
+      <Route path="/events">     <LayoutRoute component={Events} /></Route>
+      <Route path="/records">    <LayoutRoute component={Records} /></Route>
+      <Route path="/reports">    <LayoutRoute component={Reports} /></Route>
+      <Route path="/profile">    <LayoutRoute component={Profile} /></Route>
+      <Route path="/settings">   <LayoutRoute component={Settings} /></Route>
+      <Route path="/audit-log">  <LayoutRoute component={AuditLog} /></Route>
       <Route component={NotFound} />
     </Switch>
   );

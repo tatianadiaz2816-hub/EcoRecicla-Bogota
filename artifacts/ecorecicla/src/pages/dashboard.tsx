@@ -1,9 +1,10 @@
 import { useGetDashboardStats, useGetDashboardMonthlyStats, useGetDashboardRecentActivity, useGetDashboardMaterialBreakdown, useGetMe, useListEvents } from "@workspace/api-client-react";
+import { useWeeklyStats } from "@/lib/api";
 import { formatWeight, formatDate, BIN_COLORS } from "@/lib/utils-eco";
 import { 
   Users, Building2, CalendarDays, FileText, Recycle, Scale,
-  Activity, ArrowRight, TrendingUp, Leaf, Droplets, Wind,
-  Clock, MapPin, Plus, Star, ChevronRight
+  Activity, ArrowRight, TrendingUp, TrendingDown, Leaf, Droplets, Wind,
+  Clock, MapPin, Plus, Star, ChevronRight, UserCheck
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -37,6 +38,7 @@ export default function Dashboard() {
   const { data: recentActivity, isLoading: activityLoading } = useGetDashboardRecentActivity();
   const { data: materialBreakdown, isLoading: breakdownLoading } = useGetDashboardMaterialBreakdown();
   const { data: upcomingEventsData, isLoading: eventsLoading } = useListEvents({ status: "scheduled", pageSize: 4, page: 1 });
+  const { data: weeklyStats, isLoading: weeklyLoading } = useWeeklyStats();
 
   const upcomingEvents = upcomingEventsData?.data || [];
 
@@ -101,6 +103,104 @@ export default function Dashboard() {
             </Card>
           );
         })}
+      </div>
+
+      {/* MÉTRICAS SEMANALES + PARTICIPACIÓN */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {/* Esta semana */}
+        <Card className="shadow-sm border bg-white">
+          <CardContent className="p-5">
+            <div className="flex items-start justify-between mb-3">
+              <div className="p-2 rounded-lg bg-indigo-50">
+                <Scale className="w-4 h-4 text-indigo-600" />
+              </div>
+              {weeklyLoading ? (
+                <Skeleton className="h-5 w-14" />
+              ) : weeklyStats?.weekTrendPct == null ? (
+                <span className="text-xs text-muted-foreground">Sin datos prev.</span>
+              ) : weeklyStats.weekTrendPct >= 0 ? (
+                <span className="flex items-center gap-0.5 text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                  <TrendingUp className="w-3 h-3" /> +{weeklyStats.weekTrendPct}%
+                </span>
+              ) : (
+                <span className="flex items-center gap-0.5 text-xs font-semibold text-red-500 bg-red-50 px-2 py-0.5 rounded-full">
+                  <TrendingDown className="w-3 h-3" /> {weeklyStats.weekTrendPct}%
+                </span>
+              )}
+            </div>
+            {weeklyLoading ? (
+              <Skeleton className="h-8 w-24 mb-1" />
+            ) : (
+              <p className="text-2xl font-bold text-indigo-600">{formatWeight(weeklyStats?.thisWeekKg ?? 0)}</p>
+            )}
+            <p className="text-xs font-medium text-foreground mt-0.5">Esta semana</p>
+            {weeklyLoading ? (
+              <Skeleton className="h-4 w-32 mt-1" />
+            ) : (
+              <p className="text-xs text-muted-foreground mt-1">
+                {weeklyStats?.thisWeekRecords ?? 0} entregas · Sem. anterior: {formatWeight(weeklyStats?.lastWeekKg ?? 0)}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Semana anterior */}
+        <Card className="shadow-sm border bg-white">
+          <CardContent className="p-5">
+            <div className="flex items-start justify-between mb-3">
+              <div className="p-2 rounded-lg bg-slate-100">
+                <Scale className="w-4 h-4 text-slate-500" />
+              </div>
+              <span className="text-xs text-muted-foreground">Comparativo</span>
+            </div>
+            {weeklyLoading ? (
+              <Skeleton className="h-8 w-24 mb-1" />
+            ) : (
+              <p className="text-2xl font-bold text-slate-600">{formatWeight(weeklyStats?.lastWeekKg ?? 0)}</p>
+            )}
+            <p className="text-xs font-medium text-foreground mt-0.5">Semana anterior</p>
+            {weeklyLoading ? (
+              <Skeleton className="h-4 w-32 mt-1" />
+            ) : (
+              <p className="text-xs text-muted-foreground mt-1">
+                {weeklyStats?.lastWeekRecords ?? 0} entregas registradas
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Tasa de participación */}
+        <Card className="shadow-sm border bg-white">
+          <CardContent className="p-5">
+            <div className="flex items-start justify-between mb-3">
+              <div className="p-2 rounded-lg bg-teal-50">
+                <UserCheck className="w-4 h-4 text-teal-600" />
+              </div>
+              <span className="text-xs text-muted-foreground">Este mes</span>
+            </div>
+            {weeklyLoading ? (
+              <Skeleton className="h-8 w-20 mb-1" />
+            ) : (
+              <p className="text-2xl font-bold text-teal-600">{weeklyStats?.participationRate ?? 0}%</p>
+            )}
+            <p className="text-xs font-medium text-foreground mt-0.5">Tasa de participación</p>
+            {weeklyLoading ? (
+              <Skeleton className="h-4 w-36 mt-1" />
+            ) : (
+              <p className="text-xs text-muted-foreground mt-1">
+                {weeklyStats?.activeResidentsThisMonth ?? 0} de {weeklyStats?.totalResidents ?? 0} residentes activos
+              </p>
+            )}
+            {!weeklyLoading && weeklyStats && (
+              <div className="mt-2 h-1.5 bg-muted rounded-full overflow-hidden">
+                <div
+                  className="h-1.5 rounded-full bg-teal-500 transition-all duration-700"
+                  style={{ width: `${weeklyStats.participationRate}%` }}
+                />
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* GRÁFICAS */}
@@ -237,6 +337,48 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* GRÁFICA SEMANAL DEL MES ACTUAL */}
+      <Card className="shadow-sm">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-base">Reciclaje por Semana — Mes Actual</CardTitle>
+              <CardDescription className="text-xs">Kilogramos y entregas por semana del mes en curso</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="pl-0 pt-0">
+          {weeklyLoading ? (
+            <Skeleton className="h-[220px] w-full ml-4" />
+          ) : !weeklyStats?.weeklyBreakdown?.length ? (
+            <div className="h-[220px] flex flex-col items-center justify-center text-muted-foreground">
+              <Recycle className="h-10 w-10 mb-2 opacity-20" />
+              <p className="text-sm">Sin datos este mes</p>
+            </div>
+          ) : (
+            <div className="h-[220px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={weeklyStats.weeklyBreakdown} margin={{ top: 5, right: 20, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                  <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={8} fontSize={11} stroke="hsl(var(--muted-foreground))" />
+                  <YAxis yAxisId="kg" tickLine={false} axisLine={false} tickMargin={8} fontSize={11} stroke="hsl(var(--muted-foreground))" tickFormatter={(v) => `${v}kg`} />
+                  <YAxis yAxisId="rec" orientation="right" tickLine={false} axisLine={false} tickMargin={8} fontSize={11} stroke="hsl(var(--muted-foreground))" tickFormatter={(v) => `${v}`} />
+                  <Tooltip
+                    contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))", fontSize: "12px" }}
+                    formatter={(value: number, name: string) => [
+                      name === "totalKg" ? `${value} kg` : `${value} entregas`,
+                      name === "totalKg" ? "Kilogramos" : "Entregas",
+                    ]}
+                  />
+                  <Bar yAxisId="kg" dataKey="totalKg" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={60} name="totalKg" />
+                  <Bar yAxisId="rec" dataKey="totalRecords" fill="hsl(var(--primary) / 0.25)" radius={[4, 4, 0, 0]} maxBarSize={60} name="totalRecords" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* IMPACTO AMBIENTAL */}
       <Card className="shadow-sm bg-gradient-to-r from-emerald-600 to-teal-600 border-0 text-white">

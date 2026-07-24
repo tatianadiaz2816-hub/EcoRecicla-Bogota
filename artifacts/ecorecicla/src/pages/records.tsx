@@ -5,7 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, MoreVertical, Pencil, Trash2, FileText, Loader2, Calendar, Building2, User as UserIcon, Recycle, FilterX, ChevronLeft, ChevronRight, Scale } from "lucide-react";
+import { Plus, MoreVertical, Pencil, Trash2, FileText, Loader2, Calendar, Building2, User as UserIcon, Recycle, FilterX, ChevronLeft, ChevronRight, Scale, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
 const recordSchema = z.object({
   residentId: z.coerce.number().min(1, "El residente es obligatorio"),
@@ -31,6 +32,9 @@ const recordSchema = z.object({
 export default function Records() {
   const [materialFilter, setMaterialFilter] = useState<string>("all");
   const [complexFilter, setComplexFilter] = useState<string>("all");
+  const [residentFilter, setResidentFilter] = useState<string>("all");
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
   const [page, setPage] = useState(1);
   const pageSize = 10;
   const queryClient = useQueryClient();
@@ -48,6 +52,9 @@ export default function Records() {
   const { data, isLoading } = useListRecords({
     materialId: materialFilter !== "all" ? parseInt(materialFilter) : undefined,
     complexId: complexFilter !== "all" ? parseInt(complexFilter) : undefined,
+    residentId: residentFilter !== "all" ? parseInt(residentFilter) : undefined,
+    dateFrom: dateFrom || undefined,
+    dateTo: dateTo || undefined,
     page, pageSize
   });
   const records = data?.data || [];
@@ -84,6 +91,7 @@ export default function Records() {
     const payload: any = { ...values };
     if (!payload.observation) delete payload.observation;
     payload.date = new Date(values.date).toISOString();
+
     if (editingRecord) {
       updateRecord.mutate({ id: editingRecord.id, data: payload }, {
         onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListRecordsQueryKey() }); setIsModalOpen(false); toast({ title: "Registro actualizado exitosamente" }); },
@@ -105,79 +113,97 @@ export default function Records() {
     });
   };
 
-  const hasFilters = materialFilter !== "all" || complexFilter !== "all";
+  const hasFilters = materialFilter !== "all" || complexFilter !== "all" || residentFilter !== "all" || dateFrom || dateTo;
+
+  const clearFilters = () => {
+    setMaterialFilter("all"); setComplexFilter("all"); setResidentFilter("all");
+    setDateFrom(""); setDateTo(""); setPage(1);
+  };
 
   return (
     <div className="space-y-6 animate-fade-in-up">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Registros de Reciclaje</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">Registre y monitoree las entregas de materiales por residente.</p>
+          <p className="text-muted-foreground text-sm mt-0.5">Historial de entregas de materiales reciclables por residente.</p>
         </div>
-        <Button onClick={openCreate} className="gap-2 shadow-sm"><Plus className="w-4 h-4" /> Registrar Reciclaje</Button>
+        <Button onClick={openCreate} className="gap-2 shadow-sm"><Plus className="w-4 h-4" /> Nuevo Registro</Button>
       </div>
 
-      {/* Stats + Filters Row */}
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Card className="bg-gradient-to-br from-emerald-600 to-teal-600 border-0 text-white shadow-sm">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-emerald-100 mb-1">Peso Total Filtrado</p>
-                {isLoading ? <Skeleton className="h-8 w-24 bg-white/20" /> : <h2 className="text-3xl font-bold">{formatWeight(totalKg)}</h2>}
-                <p className="text-xs text-emerald-200 mt-1">{total} registro{total !== 1 ? "s" : ""} encontrado{total !== 1 ? "s" : ""}</p>
-              </div>
-              <div className="w-12 h-12 rounded-full bg-white/15 flex items-center justify-center">
-                <Scale className="h-6 w-6 text-white" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="sm:col-span-2 shadow-sm">
-          <CardContent className="p-5">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Filtrar registros</p>
-            <div className="flex flex-col sm:flex-row gap-3 items-end">
-              <div className="space-y-1 w-full">
-                <label className="text-xs text-muted-foreground">Por conjunto</label>
-                <Select value={complexFilter} onValueChange={(v) => { setComplexFilter(v); setPage(1); }}>
-                  <SelectTrigger><SelectValue placeholder="Todos los conjuntos" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos los conjuntos</SelectItem>
-                    {complexes.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1 w-full">
-                <label className="text-xs text-muted-foreground">Por material</label>
-                <Select value={materialFilter} onValueChange={(v) => { setMaterialFilter(v); setPage(1); }}>
-                  <SelectTrigger><SelectValue placeholder="Todos los materiales" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos los materiales</SelectItem>
-                    {materials.map(m => <SelectItem key={m.id} value={String(m.id)}>{m.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              {hasFilters && (
-                <Button variant="outline" className="shrink-0 gap-2 text-muted-foreground" onClick={() => { setMaterialFilter("all"); setComplexFilter("all"); setPage(1); }}>
-                  <FilterX className="h-4 w-4" /> Limpiar
-                </Button>
+      {/* KPI stripe */}
+      <Card className="shadow-sm border-l-4 border-l-emerald-500">
+        <CardContent className="py-4 px-5">
+          <div className="flex items-center gap-3">
+            <Scale className="w-5 h-5 text-emerald-600" />
+            <div>
+              <p className="text-xs text-muted-foreground">Peso total filtrado</p>
+              {isLoading ? <Skeleton className="h-6 w-24 mt-0.5" /> : (
+                <p className="text-2xl font-bold text-emerald-700">{formatWeight(totalKg)}</p>
               )}
             </div>
-          </CardContent>
-        </Card>
-      </div>
+            <div className="ml-auto text-right">
+              <p className="text-xs text-muted-foreground">Registros</p>
+              {isLoading ? <Skeleton className="h-6 w-12 mt-0.5 ml-auto" /> : (
+                <p className="text-2xl font-bold text-foreground">{total.toLocaleString("es-CO")}</p>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card className="shadow-sm">
-        <CardContent className="p-0">
+        <CardHeader className="pb-0 pt-4 px-5">
+          <div className="flex flex-col gap-3">
+            {/* Row 1: dropdowns */}
+            <div className="flex flex-col sm:flex-row gap-3 flex-wrap items-start sm:items-center">
+              <Select value={complexFilter} onValueChange={(v) => { setComplexFilter(v); setPage(1); }}>
+                <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Todos los conjuntos" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los conjuntos</SelectItem>
+                  {complexes.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={residentFilter} onValueChange={(v) => { setResidentFilter(v); setPage(1); }}>
+                <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Todos los residentes" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los residentes</SelectItem>
+                  {residents.map(r => <SelectItem key={r.id} value={String(r.id)}>{r.fullName}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={materialFilter} onValueChange={(v) => { setMaterialFilter(v); setPage(1); }}>
+                <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Todos los materiales" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los materiales</SelectItem>
+                  {materials.map(m => <SelectItem key={m.id} value={String(m.id)}>{m.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            {/* Row 2: date range */}
+            <div className="flex flex-col sm:flex-row gap-3 flex-wrap items-center">
+              <span className="text-xs text-muted-foreground font-medium">Período:</span>
+              <Input type="date" className="w-full sm:w-[155px] h-9 text-sm" value={dateFrom}
+                onChange={(e) => { setDateFrom(e.target.value); setPage(1); }} />
+              <span className="text-xs text-muted-foreground">al</span>
+              <Input type="date" className="w-full sm:w-[155px] h-9 text-sm" value={dateTo}
+                onChange={(e) => { setDateTo(e.target.value); setPage(1); }} />
+              {hasFilters && (
+                <button onClick={clearFilters} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors ml-auto">
+                  <FilterX className="w-3.5 h-3.5" /> Limpiar filtros
+                </button>
+              )}
+            </div>
+          </div>
+        </CardHeader>
+
+        <CardContent className="p-0 mt-3">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/30 hover:bg-muted/30">
-                <TableHead className="pl-5 font-semibold text-xs uppercase tracking-wide">Fecha</TableHead>
-                <TableHead className="font-semibold text-xs uppercase tracking-wide">Residente</TableHead>
+                <TableHead className="pl-5 font-semibold text-xs uppercase tracking-wide">Residente</TableHead>
                 <TableHead className="font-semibold text-xs uppercase tracking-wide">Conjunto</TableHead>
                 <TableHead className="font-semibold text-xs uppercase tracking-wide">Material</TableHead>
-                <TableHead className="text-right font-semibold text-xs uppercase tracking-wide">Peso</TableHead>
+                <TableHead className="font-semibold text-xs uppercase tracking-wide">Fecha</TableHead>
+                <TableHead className="font-semibold text-xs uppercase tracking-wide">Peso</TableHead>
                 <TableHead className="pr-5 text-right font-semibold text-xs uppercase tracking-wide">Acciones</TableHead>
               </TableRow>
             </TableHeader>
@@ -185,12 +211,11 @@ export default function Records() {
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <TableRow key={i}>
-                    <TableCell className="pl-5"><Skeleton className="h-5 w-[100px]" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-[150px]" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-[150px]" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-[100px]" /></TableCell>
-                    <TableCell className="text-right"><Skeleton className="h-5 w-[70px] ml-auto" /></TableCell>
-                    <TableCell className="pr-5 text-right"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
+                    {Array.from({ length: 6 }).map((__, j) => (
+                      <TableCell key={j} className={j === 0 ? "pl-5" : j === 5 ? "pr-5 text-right" : ""}>
+                        <Skeleton className="h-5 w-full max-w-[150px]" />
+                      </TableCell>
+                    ))}
                   </TableRow>
                 ))
               ) : records.length === 0 ? (
@@ -198,42 +223,41 @@ export default function Records() {
                   <TableCell colSpan={6} className="h-48 text-center">
                     <div className="flex flex-col items-center gap-2 text-muted-foreground">
                       <FileText className="w-10 h-10 opacity-20" />
-                      <p className="font-medium text-sm">No se encontraron registros</p>
-                      <p className="text-xs">{hasFilters ? "Ajuste los filtros para ver más resultados." : "Comience registrando la primera entrega de reciclaje."}</p>
-                      {hasFilters && <Button variant="outline" size="sm" onClick={() => { setMaterialFilter("all"); setComplexFilter("all"); }}>Limpiar filtros</Button>}
+                      <p className="font-medium text-sm">Sin registros</p>
+                      <p className="text-xs">Ajuste los filtros o cree un nuevo registro.</p>
                     </div>
                   </TableCell>
                 </TableRow>
               ) : records.map((record) => (
                 <TableRow key={record.id} className="group hover:bg-muted/30 transition-colors">
                   <TableCell className="pl-5 py-3">
-                    <span className="flex items-center gap-1.5 text-sm font-medium whitespace-nowrap">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                        <UserIcon className="w-3.5 h-3.5 text-primary" />
+                      </div>
+                      <p className="text-sm font-medium">{record.residentName || "—"}</p>
+                    </div>
+                  </TableCell>
+                  <TableCell className="py-3">
+                    <p className="text-sm flex items-center gap-1.5">
+                      <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
+                      {record.complexName || "—"}
+                    </p>
+                  </TableCell>
+                  <TableCell className="py-3">
+                    <span className="inline-flex items-center gap-1.5 text-sm">
+                      <Recycle className="w-3.5 h-3.5 text-emerald-600" />
+                      {record.materialName || "—"}
+                    </span>
+                  </TableCell>
+                  <TableCell className="py-3">
+                    <p className="text-sm flex items-center gap-1.5">
                       <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
                       {formatDate(record.date)}
-                    </span>
+                    </p>
                   </TableCell>
                   <TableCell className="py-3">
-                    <span className="flex items-center gap-1.5 text-sm">
-                      <UserIcon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                      {record.residentName}
-                    </span>
-                  </TableCell>
-                  <TableCell className="py-3">
-                    <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                      <Building2 className="w-3.5 h-3.5 shrink-0" />
-                      {record.complexName}
-                    </span>
-                  </TableCell>
-                  <TableCell className="py-3">
-                    <span className="flex items-center gap-1.5 text-sm">
-                      <Recycle className="w-3.5 h-3.5 text-primary shrink-0" />
-                      {record.materialName}
-                    </span>
-                    {record.observation && <p className="text-xs text-muted-foreground max-w-[180px] truncate mt-0.5 pl-5">{record.observation}</p>}
-                  </TableCell>
-                  <TableCell className="py-3 text-right">
-                    <span className="inline-flex items-center gap-1 font-bold text-sm text-emerald-700 bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-full">
-                      <Scale className="w-3 h-3" />
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                       {formatWeight(record.weightKg)}
                     </span>
                   </TableCell>
@@ -257,7 +281,7 @@ export default function Records() {
 
           {totalPages > 1 && (
             <div className="flex items-center justify-between px-5 py-3 border-t bg-muted/20">
-              <p className="text-xs text-muted-foreground">Mostrando {Math.min((page - 1) * pageSize + 1, total)}–{Math.min(page * pageSize, total)} de {total} registros</p>
+              <p className="text-xs text-muted-foreground">Mostrando {Math.min((page - 1) * pageSize + 1, total)}–{Math.min(page * pageSize, total)} de {total}</p>
               <div className="flex items-center gap-1">
                 <Button variant="outline" size="sm" className="h-8 w-8 p-0" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}><ChevronLeft className="h-4 w-4" /></Button>
                 {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
@@ -271,11 +295,12 @@ export default function Records() {
         </CardContent>
       </Card>
 
+      {/* Create/Edit Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[560px]">
           <DialogHeader>
-            <DialogTitle>{editingRecord ? "Editar Registro" : "Registrar Reciclaje"}</DialogTitle>
-            <DialogDescription>Complete los datos de la entrega de material reciclable.</DialogDescription>
+            <DialogTitle>{editingRecord ? "Editar Registro" : "Nuevo Registro de Reciclaje"}</DialogTitle>
+            <DialogDescription>{editingRecord ? "Actualice los datos del registro." : "Ingrese los datos del material reciclado por el residente."}</DialogDescription>
           </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-2">
@@ -288,20 +313,14 @@ export default function Records() {
                     </Select><FormMessage />
                   </FormItem>
                 )} />
-                <FormField control={form.control} name="residentId" render={({ field }) => {
-                  const complexId = form.watch("complexId");
-                  const filtered = residents.filter(r => !complexId || r.complexId === complexId);
-                  return (
-                    <FormItem><FormLabel>Residente <span className="text-destructive">*</span></FormLabel>
-                      <Select onValueChange={(v) => field.onChange(parseInt(v))} value={field.value ? String(field.value) : undefined} disabled={!complexId}>
-                        <FormControl><SelectTrigger><SelectValue placeholder={complexId ? "Seleccionar..." : "Primero el conjunto"} /></SelectTrigger></FormControl>
-                        <SelectContent>{filtered.map(r => <SelectItem key={r.id} value={String(r.id)}>{r.fullName}</SelectItem>)}</SelectContent>
-                      </Select><FormMessage />
-                    </FormItem>
-                  );
-                }} />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
+                <FormField control={form.control} name="residentId" render={({ field }) => (
+                  <FormItem><FormLabel>Residente <span className="text-destructive">*</span></FormLabel>
+                    <Select onValueChange={(v) => field.onChange(parseInt(v))} value={field.value ? String(field.value) : undefined}>
+                      <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar..." /></SelectTrigger></FormControl>
+                      <SelectContent>{residents.map(r => <SelectItem key={r.id} value={String(r.id)}>{r.fullName}</SelectItem>)}</SelectContent>
+                    </Select><FormMessage />
+                  </FormItem>
+                )} />
                 <FormField control={form.control} name="materialId" render={({ field }) => (
                   <FormItem><FormLabel>Material <span className="text-destructive">*</span></FormLabel>
                     <Select onValueChange={(v) => field.onChange(parseInt(v))} value={field.value ? String(field.value) : undefined}>
@@ -311,15 +330,19 @@ export default function Records() {
                   </FormItem>
                 )} />
                 <FormField control={form.control} name="weightKg" render={({ field }) => (
-                  <FormItem><FormLabel>Peso (kg) <span className="text-destructive">*</span></FormLabel><FormControl><Input type="number" step="0.01" min="0.01" placeholder="0.00" {...field} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>Peso (kg) <span className="text-destructive">*</span></FormLabel>
+                    <FormControl><Input type="number" step="0.001" min="0.001" placeholder="0.500" {...field} /></FormControl><FormMessage />
+                  </FormItem>
+                )} />
+                <FormField control={form.control} name="date" render={({ field }) => (
+                  <FormItem className="col-span-2"><FormLabel>Fecha de entrega <span className="text-destructive">*</span></FormLabel>
+                    <FormControl><Input type="date" {...field} /></FormControl><FormMessage />
+                  </FormItem>
                 )} />
               </div>
-              <FormField control={form.control} name="date" render={({ field }) => (
-                <FormItem><FormLabel>Fecha de entrega <span className="text-destructive">*</span></FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
               <FormField control={form.control} name="observation" render={({ field }) => (
                 <FormItem><FormLabel>Observaciones</FormLabel>
-                  <FormControl><Textarea placeholder="Estado del material, observaciones de contaminación, etc." className="resize-none h-20" {...field} /></FormControl>
+                  <FormControl><Textarea placeholder="Notas adicionales sobre el material o la entrega..." className="resize-none h-20" {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
@@ -327,7 +350,7 @@ export default function Records() {
                 <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
                 <Button type="submit" disabled={createRecord.isPending || updateRecord.isPending} className="gap-2">
                   {(createRecord.isPending || updateRecord.isPending) && <Loader2 className="w-4 h-4 animate-spin" />}
-                  {editingRecord ? "Guardar cambios" : "Registrar entrega"}
+                  {editingRecord ? "Guardar cambios" : "Crear registro"}
                 </Button>
               </DialogFooter>
             </form>
@@ -339,7 +362,7 @@ export default function Records() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>¿Eliminar registro?</AlertDialogTitle>
-            <AlertDialogDescription>El peso registrado se eliminará permanentemente de las métricas del sistema. Esta acción no se puede deshacer.</AlertDialogDescription>
+            <AlertDialogDescription>Esta acción eliminará permanentemente el registro de reciclaje. No se puede deshacer.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>

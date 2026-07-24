@@ -15,6 +15,7 @@ import {
   UpdateUserResponse,
 } from "@workspace/api-zod";
 import { getUserFromToken } from "./auth";
+import { logAudit } from "../audit";
 
 const router: IRouter = Router();
 
@@ -113,6 +114,7 @@ router.post("/users", async (req, res): Promise<void> => {
     complexName = c?.name ?? null;
   }
 
+  await logAudit({ userId: auth.id, userFullName: auth.fullName, action: "create", resource: "user", resourceId: user.id, details: `Creó usuario: ${user.fullName}` });
   res.status(201).json(CreateUserResponse.parse(buildUserResponse(user, complexName)));
 });
 
@@ -169,6 +171,7 @@ router.patch("/users/:id", async (req, res): Promise<void> => {
     complexName = c?.name ?? null;
   }
 
+  await logAudit({ userId: auth.id, userFullName: auth.fullName, action: "update", resource: "user", resourceId: user.id, details: `Actualizó usuario: ${user.fullName}` });
   res.json(UpdateUserResponse.parse(buildUserResponse(user, complexName)));
 });
 
@@ -188,6 +191,7 @@ router.delete("/users/:id", async (req, res): Promise<void> => {
     return;
   }
 
+  await logAudit({ userId: auth.id, userFullName: auth.fullName, action: "delete", resource: "user", resourceId: params.data.id, details: `Eliminó usuario: ${user.fullName}` });
   res.sendStatus(204);
 });
 

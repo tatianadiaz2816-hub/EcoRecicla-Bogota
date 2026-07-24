@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useGetReportSummary, useListComplexes, useListMaterials, useListUsers } from "@workspace/api-client-react";
+import { useSettings } from "@/lib/api";
 import { formatWeight, formatDate, BIN_COLORS } from "@/lib/utils-eco";
 import * as xlsx from "xlsx";
 import { BarChart as BarChartIcon, Download, Filter, FileSpreadsheet, FileText, Scale, Hash, TrendingUp } from "lucide-react";
@@ -9,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 
 const BIN_HEX: Record<string, string> = {
   blue: "#3b82f6", green: "#16a34a", yellow: "#ca8a04", red: "#ef4444",
@@ -31,6 +32,8 @@ export default function Reports() {
 
   const { data: residentsData } = useListUsers({ role: "resident", pageSize: 500 });
   const residents = residentsData?.data || [];
+
+  const { data: settings } = useSettings();
 
   const { data: summary, isLoading } = useGetReportSummary({
     dateFrom: dateFrom || undefined,
@@ -59,6 +62,121 @@ export default function Reports() {
     xlsx.writeFile(wb, `EcoRecicla_Reporte_${new Date().toISOString().split("T")[0]}.xlsx`);
   };
 
+  const handleExportPDF = async () => {
+    if (!summary) return;
+    const { default: jsPDF } = await import("jspdf");
+    const { default: autoTable } = await import("jspdf-autotable");
+
+    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+    const orgName = settings?.orgName || "EcoRecicla Bogotá";
+    const now = new Date().toLocaleString("es-CO");
+    const dateStr = new Date().toISOString().split("T")[0];
+
+    // ── Header ──
+    doc.setFillColor(22, 163, 74); // primary green
+    doc.rect(0, 0, 210, 28, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.text(orgName, 14, 12);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text("Reporte Oficial de Reciclaje", 14, 19);
+    doc.text(`Generado: ${now}`, 210 - 14, 19, { align: "right" });
+
+    // ── Filter summary ──
+    doc.setTextColor(60, 60, 60);
+    doc.setFontSize(9);
+    let y = 36;
+    const filterParts: string[] = [];
+    if (dateFrom || dateTo) filterParts.push(`Período: ${dateFrom || "Inicio"} al ${dateTo || "Fin"}`);
+    if (complexId !== "all") filterParts.push(`Conjunto: ${complexes.find(c => String(c.id) === complexId)?.name || "—"}`);
+    if (materialId !== "all") filterParts.push(`Material: ${materials.find(m => String(m.id) === materialId)?.name || "—"}`);
+    if (residentId !== "all") filterParts.push(`Residente: ${residents.find(r => String(r.id) === residentId)?.fullName || "—"}`);
+    if (filterParts.length === 0) filterParts.push("Sin filtros aplicados — todos los registros");
+    doc.setFont("helvetica", "italic");
+    doc.text(filterParts.join("  ·  "), 14, y);
+    y += 10;
+
+    // ── KPI cards row ──
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    const kpis = [
+      { label: "Peso total reciclado", value: formatWeight(summary.totalKg) },
+      { label: "Total de registros", value: String(summary.totalRecords) },
+      { label: "Materiales", value: String(summary.byMaterial?.length || 0) },
+    ];
+    kpis.forEach((kpi, i) => {
+      const x = 14 + i * 63;
+      doc.setFillColor(240, 253, 244);
+      doc.roundedRect(x, y, 58, 20, 3, 3, "F");
+      doc.setTextColor(22, 163, 74);
+      doc.setFontSize(14);
+      doc.text(kpi.value, x + 29, y + 11, { align: "center" });
+      doc.setFontSize(8);
+      doc.setTextColor(100, 116, 139);
+      doc.text(kpi.label, x + 29, y + 17, { align: "center" });
+    });
+    y += 28;
+
+    // ── By material table ──
+    if (summary.byMaterial && summary.byMaterial.length > 0) {
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(30, 30, 30);
+      doc.text("Reciclaje por Material", 14, y);
+      y += 4;
+      autoTable(doc, {
+        startY: y,
+        head: [["Material", "Registros", "Peso (kg)"]],
+        body: summary.byMaterial.map(m => [m.materialName, m.totalRecords, formatWeight(m.totalKg)]),
+        styles: { fontSize: 9, cellPadding: 3 },
+        headStyles: { fillColor: [22, 163, 74], textColor: 255, fontStyle: "bold" },
+        alternateRowStyles: { fillColor: [245, 250, 246] },
+        margin: { left: 14, right: 14 },
+      });
+      y = (doc as any).lastAutoTable.finalY + 10;
+    }
+
+    // ── Detail table ──
+    if (summary.records && summary.records.length > 0) {
+      if (y > 220) { doc.addPage(); y = 20; }
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(30, 30, 30);
+      doc.text("Detalle de Registros", 14, y);
+      y += 4;
+      autoTable(doc, {
+        startY: y,
+        head: [["Fecha", "Residente", "Conjunto", "Material", "Peso (kg)"]],
+        body: summary.records.slice(0, 200).map(r => [
+          formatDate(r.date),
+          r.residentName || "—",
+          r.complexName || "—",
+          r.materialName || "—",
+          formatWeight(r.weightKg),
+        ]),
+        styles: { fontSize: 8, cellPadding: 2.5, overflow: "linebreak" },
+        headStyles: { fillColor: [22, 163, 74], textColor: 255, fontStyle: "bold" },
+        alternateRowStyles: { fillColor: [245, 250, 246] },
+        columnStyles: { 4: { halign: "right" } },
+        margin: { left: 14, right: 14 },
+      });
+    }
+
+    // ── Footer on each page ──
+    const pageCount = (doc as any).internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(150);
+      doc.text(`${orgName} — Página ${i} de ${pageCount}`, 14, 290);
+      doc.text(settings?.orgEmail || "", 210 - 14, 290, { align: "right" });
+    }
+
+    doc.save(`EcoRecicla_Reporte_${dateStr}.pdf`);
+  };
+
   const hasFilters = dateFrom || dateTo || materialId !== "all" || complexId !== "all" || residentId !== "all";
 
   return (
@@ -73,8 +191,8 @@ export default function Reports() {
           <Button variant="outline" className="gap-2" onClick={handleExportExcel} disabled={!summary || summary.records.length === 0}>
             <FileSpreadsheet className="w-4 h-4 text-emerald-600" /> Exportar Excel
           </Button>
-          <Button className="gap-2" onClick={() => window.print()}>
-            <FileText className="w-4 h-4" /> Imprimir PDF
+          <Button className="gap-2" onClick={handleExportPDF} disabled={!summary || summary.records.length === 0}>
+            <FileText className="w-4 h-4" /> Exportar PDF
           </Button>
         </div>
       </div>
@@ -133,18 +251,6 @@ export default function Reports() {
             </div>
           </CardContent>
         </Card>
-
-        {/* Encabezado impresión */}
-        <div className="hidden print:block text-center border-b pb-6 mb-6">
-          <h1 className="text-2xl font-bold">EcoRecicla Bogotá — Reporte Oficial</h1>
-          <p className="text-gray-600 mt-2">Generado el: {new Date().toLocaleString("es-CO")}</p>
-          <div className="text-sm mt-4 grid grid-cols-2 text-left max-w-xl mx-auto">
-            <div><strong>Período:</strong></div>
-            <div className="text-right">{dateFrom || dateTo ? `${dateFrom || "Inicio"} al ${dateTo || "Fin"}` : "Todo el período"}</div>
-            <div>Conjunto: {complexId !== "all" ? complexes.find(c => String(c.id) === complexId)?.name : "Todos"}</div>
-            <div className="text-right">Material: {materialId !== "all" ? materials.find(m => String(m.id) === materialId)?.name : "Todos"}</div>
-          </div>
-        </div>
 
         {/* KPI cards */}
         <div className="grid gap-4 md:grid-cols-2">
@@ -271,7 +377,7 @@ export default function Reports() {
         <Card className="shadow-sm print:break-inside-avoid">
           <CardHeader className="border-b pb-3">
             <CardTitle className="text-sm font-semibold">Detalle de Registros</CardTitle>
-            <CardDescription className="text-xs print:hidden">Máximo 100 filas. Exporte a Excel para el conjunto completo.</CardDescription>
+            <CardDescription className="text-xs print:hidden">Máximo 100 filas. Exporte a Excel/PDF para el conjunto completo.</CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             <Table>
@@ -308,7 +414,7 @@ export default function Reports() {
             </Table>
             {summary?.records && summary.records.length > 100 && (
               <div className="p-4 text-center text-xs text-muted-foreground border-t print:hidden">
-                Mostrando los primeros 100 de {summary.records.length} registros. Exporte a Excel para verlos todos.
+                Mostrando los primeros 100 de {summary.records.length} registros. Exporte a Excel o PDF para verlos todos.
               </div>
             )}
           </CardContent>

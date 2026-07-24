@@ -143,4 +143,81 @@ router.get("/dashboard/material-breakdown", async (req, res): Promise<void> => {
   res.json(GetDashboardMaterialBreakdownResponse.parse(result));
 });
 
+router.get("/dashboard/weekly-stats", async (req, res): Promise<void> => {
+  if (!await requireAuth(req, res)) return;
+
+  const now = new Date();
+  // ISO week: Monday = start
+  const dow = now.getDay() === 0 ? 6 : now.getDay() - 1; // 0=Mon … 6=Sun
+  const thisMonStart = new Date(now); thisMonStart.setDate(now.getDate() - dow); thisMonStart.setHours(0, 0, 0, 0);
+  const thisSunEnd  = new Date(thisMonStart); thisSunEnd.setDate(thisMonStart.getDate() + 7);
+  const lastMonStart = new Date(thisMonStart); lastMonStart.setDate(thisMonStart.getDate() - 7);
+  const lastSunEnd   = new Date(thisMonStart); // same as thisMonStart
+
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const monthEnd   = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+  const [thisWeekRows, lastWeekRows, monthResidents, totalResidents, weeklyBreakdown] = await Promise.all([
+    // This week kg + records
+    db.select({
+      totalKg:      sql<number>`COALESCE(SUM(${recyclingRecordsTable.weightKg}), 0)::float`,
+      totalRecords: sql<number>`COUNT(*)::integer`,
+    }).from(recyclingRecordsTable)
+      .where(sql`${recyclingRecordsTable.date}::date >= ${thisMonStart.toISOString()}::date AND ${recyclingRecordsTable.date}::date < ${thisSunEnd.toISOString()}::date`),
+
+    // Last week kg + records
+    db.select({
+      totalKg:      sql<number>`COALESCE(SUM(${recyclingRecordsTable.weightKg}), 0)::float`,
+      totalRecords: sql<number>`COUNT(*)::integer`,
+    }).from(recyclingRecordsTable)
+      .where(sql`${recyclingRecordsTable.date}::date >= ${lastMonStart.toISOString()}::date AND ${recyclingRecordsTable.date}::date < ${lastSunEnd.toISOString()}::date`),
+
+    // Distinct residents who recycled this month
+    db.select({ cnt: sql<number>`COUNT(DISTINCT ${recyclingRecordsTable.residentId})::integer` })
+      .from(recyclingRecordsTable)
+      .where(sql`${recyclingRecordsTable.date}::date >= ${monthStart.toISOString()}::date AND ${recyclingRecordsTable.date}::date < ${monthEnd.toISOString()}::date`),
+
+    // Total active residents
+    db.select({ cnt: count() }).from(usersTable).where(eq(usersTable.role, "resident")),
+
+    // Weekly kg breakdown for current month (ISO week number)
+    db.select({
+      week:         sql<number>`EXTRACT(WEEK FROM ${recyclingRecordsTable.date}::date)::integer`,
+      totalKg:      sql<number>`COALESCE(SUM(${recyclingRecordsTable.weightKg}), 0)::float`,
+      totalRecords: sql<number>`COUNT(*)::integer`,
+    }).from(recyclingRecordsTable)
+      .where(sql`${recyclingRecordsTable.date}::date >= ${monthStart.toISOString()}::date AND ${recyclingRecordsTable.date}::date < ${monthEnd.toISOString()}::date`)
+      .groupBy(sql`EXTRACT(WEEK FROM ${recyclingRecordsTable.date}::date)`)
+      .orderBy(sql`EXTRACT(WEEK FROM ${recyclingRecordsTable.date}::date)`),
+  ]);
+
+  const thisKg   = Number(thisWeekRows[0]?.totalKg ?? 0);
+  const lastKg   = Number(lastWeekRows[0]?.totalKg ?? 0);
+  const weekTrend = lastKg === 0 ? null : Math.round(((thisKg - lastKg) / lastKg) * 100);
+
+  const activeResidents  = Number(monthResidents[0]?.cnt ?? 0);
+  const totalRes         = Number(totalResidents[0]?.cnt ?? 0);
+  const participationRate = totalRes > 0 ? Math.round((activeResidents / totalRes) * 100) : 0;
+
+  // Label weeks as "Sem 1", "Sem 2", etc relative to position in month
+  const sorted = [...weeklyBreakdown].sort((a, b) => Number(a.week) - Number(b.week));
+  const weeklyData = sorted.map((row, idx) => ({
+    label: `Sem ${idx + 1}`,
+    totalKg: Number(row.totalKg),
+    totalRecords: Number(row.totalRecords),
+  }));
+
+  res.json({
+    thisWeekKg:       thisKg,
+    thisWeekRecords:  Number(thisWeekRows[0]?.totalRecords ?? 0),
+    lastWeekKg:       lastKg,
+    lastWeekRecords:  Number(lastWeekRows[0]?.totalRecords ?? 0),
+    weekTrendPct:     weekTrend,
+    activeResidentsThisMonth: activeResidents,
+    totalResidents:   totalRes,
+    participationRate,
+    weeklyBreakdown:  weeklyData,
+  });
+});
+
 export default router;

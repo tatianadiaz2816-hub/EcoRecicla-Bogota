@@ -14,6 +14,7 @@ import {
   UpdateEventResponse,
 } from "@workspace/api-zod";
 import { getUserFromToken } from "./auth";
+import { logAudit } from "../audit";
 
 const router: IRouter = Router();
 
@@ -86,10 +87,12 @@ router.get("/events", async (req, res): Promise<void> => {
 });
 
 router.post("/events", async (req, res): Promise<void> => {
-  if (!await requireAuth(req, res)) return;
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
   const parsed = CreateEventBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
   const [event] = await db.insert(eventsTable).values(parsed.data).returning();
+  await logAudit({ userId: auth.id, userFullName: auth.fullName, action: "create", resource: "event", resourceId: event.id, details: `Creó jornada: ${event.eventName}` });
   res.status(201).json(CreateEventResponse.parse(await buildEventResponse(event)));
 });
 
@@ -103,22 +106,26 @@ router.get("/events/:id", async (req, res): Promise<void> => {
 });
 
 router.patch("/events/:id", async (req, res): Promise<void> => {
-  if (!await requireAuth(req, res)) return;
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
   const params = UpdateEventParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
   const body = UpdateEventBody.safeParse(req.body);
   if (!body.success) { res.status(400).json({ error: body.error.message }); return; }
   const [event] = await db.update(eventsTable).set(body.data).where(eq(eventsTable.id, params.data.id)).returning();
   if (!event) { res.status(404).json({ error: "Event not found" }); return; }
+  await logAudit({ userId: auth.id, userFullName: auth.fullName, action: "update", resource: "event", resourceId: event.id, details: `Actualizó jornada: ${event.eventName}` });
   res.json(UpdateEventResponse.parse(await buildEventResponse(event)));
 });
 
 router.delete("/events/:id", async (req, res): Promise<void> => {
-  if (!await requireAuth(req, res)) return;
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
   const params = DeleteEventParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
   const [e] = await db.delete(eventsTable).where(eq(eventsTable.id, params.data.id)).returning();
   if (!e) { res.status(404).json({ error: "Event not found" }); return; }
+  await logAudit({ userId: auth.id, userFullName: auth.fullName, action: "delete", resource: "event", resourceId: params.data.id, details: `Eliminó jornada: ${e.eventName}` });
   res.sendStatus(204);
 });
 

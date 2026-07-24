@@ -16,6 +16,7 @@ import {
   GetTotalKgResponse,
 } from "@workspace/api-zod";
 import { getUserFromToken } from "./auth";
+import { logAudit } from "../audit";
 
 const router: IRouter = Router();
 
@@ -90,7 +91,6 @@ router.get("/records", async (req, res): Promise<void> => {
     db.select({ totalKg: sum(recyclingRecordsTable.weightKg) }).from(recyclingRecordsTable).where(whereClause),
   ]);
 
-  // Batch load related data
   const residentIds = [...new Set(records.map((r) => r.residentId))];
   const complexIds = [...new Set(records.map((r) => r.complexId))];
   const materialIds = [...new Set(records.map((r) => r.materialId))];
@@ -138,10 +138,12 @@ router.get("/records", async (req, res): Promise<void> => {
 });
 
 router.post("/records", async (req, res): Promise<void> => {
-  if (!await requireAuth(req, res)) return;
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
   const parsed = CreateRecordBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
   const [record] = await db.insert(recyclingRecordsTable).values({ ...parsed.data, weightKg: String(parsed.data.weightKg) }).returning();
+  await logAudit({ userId: auth.id, userFullName: auth.fullName, action: "create", resource: "record", resourceId: record.id, details: `Registró reciclaje: ${record.weightKg} kg` });
   res.status(201).json(CreateRecordResponse.parse(await enrichRecord(record)));
 });
 
@@ -155,7 +157,8 @@ router.get("/records/:id", async (req, res): Promise<void> => {
 });
 
 router.patch("/records/:id", async (req, res): Promise<void> => {
-  if (!await requireAuth(req, res)) return;
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
   const params = UpdateRecordParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
   const body = UpdateRecordBody.safeParse(req.body);
@@ -164,15 +167,18 @@ router.patch("/records/:id", async (req, res): Promise<void> => {
   if (updateData.weightKg !== undefined) updateData.weightKg = String(updateData.weightKg);
   const [record] = await db.update(recyclingRecordsTable).set(updateData).where(eq(recyclingRecordsTable.id, params.data.id)).returning();
   if (!record) { res.status(404).json({ error: "Record not found" }); return; }
+  await logAudit({ userId: auth.id, userFullName: auth.fullName, action: "update", resource: "record", resourceId: record.id, details: `Actualizó registro: ${record.weightKg} kg` });
   res.json(UpdateRecordResponse.parse(await enrichRecord(record)));
 });
 
 router.delete("/records/:id", async (req, res): Promise<void> => {
-  if (!await requireAuth(req, res)) return;
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
   const params = DeleteRecordParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
   const [r] = await db.delete(recyclingRecordsTable).where(eq(recyclingRecordsTable.id, params.data.id)).returning();
   if (!r) { res.status(404).json({ error: "Record not found" }); return; }
+  await logAudit({ userId: auth.id, userFullName: auth.fullName, action: "delete", resource: "record", resourceId: params.data.id, details: `Eliminó registro #${params.data.id}` });
   res.sendStatus(204);
 });
 
