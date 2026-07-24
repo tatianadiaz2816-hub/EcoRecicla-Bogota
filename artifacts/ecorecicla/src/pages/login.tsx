@@ -65,7 +65,7 @@ export default function Login() {
             Gestión inteligente del reciclaje residencial
           </h2>
           <p className="text-emerald-100 text-sm leading-relaxed">
-            Monitoree el impacto ambiental, coordine jornadas de recolección y analice el comportamiento de reciclaje en conjuntos residenciales de Bogotá.
+            Transforme la gestión del reciclaje con una plataforma que centraliza la información, facilita el seguimiento de las jornadas y genera indicadores para apoyar la toma de decisiones.
           </p>
         </div>
 
@@ -101,7 +101,7 @@ export default function Login() {
 
           <div className="mb-8">
             <h1 className="text-2xl font-bold text-foreground">Iniciar sesión</h1>
-            <p className="text-muted-foreground text-sm mt-1">Ingrese sus credenciales institucionales para continuar.</p>
+            <p className="text-muted-foreground text-sm mt-1">Ingrese sus credenciales para acceder al sistema.</p>
           </div>
 
           <Form {...form}>
@@ -112,7 +112,7 @@ export default function Login() {
                   <FormControl>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input placeholder="admin@ecorecicla.gov.co" className="pl-9 h-11" {...field} />
+                      <Input placeholder="admin@ecorecicla.com" className="pl-9 h-11" {...field} />
                     </div>
                   </FormControl>
                   <FormMessage />
@@ -140,11 +140,17 @@ export default function Login() {
             </form>
           </Form>
 
-          <div className="mt-8 p-4 bg-muted/50 rounded-lg border border-border/50">
-            <p className="text-xs font-semibold text-muted-foreground mb-2">Credenciales de demo:</p>
-            <div className="space-y-1">
-              <p className="text-xs text-muted-foreground"><span className="font-medium text-foreground">Administrador:</span> admin@ecorecicla.com · admin123</p>
-              <p className="text-xs text-muted-foreground"><span className="font-medium text-foreground">Residente:</span> maria.garcia@email.com · resident123</p>
+          <div className="mt-6 p-4 bg-emerald-50/60 rounded-xl border border-emerald-100">
+            <p className="text-xs font-semibold text-emerald-800 mb-3 tracking-wide uppercase">Credenciales de demostración</p>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-xs text-emerald-700 font-medium">Correo:</span>
+                <span className="text-xs text-emerald-900 font-mono bg-white/70 px-2 py-0.5 rounded-md border border-emerald-100 select-all">admin@ecorecicla.com</span>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-xs text-emerald-700 font-medium">Contraseña:</span>
+                <span className="text-xs text-emerald-900 font-mono bg-white/70 px-2 py-0.5 rounded-md border border-emerald-100 select-all">admin123</span>
+              </div>
             </div>
           </div>
 
