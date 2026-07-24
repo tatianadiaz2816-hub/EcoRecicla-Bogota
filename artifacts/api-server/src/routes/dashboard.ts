@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, count, sum, sql } from "drizzle-orm";
+import { eq, count, sum, sql, and } from "drizzle-orm";
 import { db, usersTable, complexesTable, materialsTable, eventsTable, recyclingRecordsTable } from "@workspace/db";
 import {
   GetDashboardStatsResponse,
@@ -51,25 +51,28 @@ router.get("/dashboard/monthly-stats", async (req, res): Promise<void> => {
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
   const year = parsed.data.year ?? new Date().getFullYear();
 
-  const rawMonthly = await db.execute(sql`
-    SELECT
-      EXTRACT(MONTH FROM date::date)::integer AS month,
-      EXTRACT(YEAR FROM date::date)::integer AS year,
-      COALESCE(SUM(weight_kg), 0)::float AS total_kg,
-      COUNT(*)::integer AS total_records
-    FROM recycling_records
-    WHERE EXTRACT(YEAR FROM date::date) = ${year}
-    GROUP BY month, year
-    ORDER BY month
-  `);
-  const rows = (rawMonthly as any).rows ?? (rawMonthly as any) ?? [];
+  // Use query builder with sql`` expressions to avoid raw execute() result shape issues
+  const rows = await db
+    .select({
+      month: sql<number>`EXTRACT(MONTH FROM ${recyclingRecordsTable.date}::date)::integer`,
+      year:  sql<number>`EXTRACT(YEAR  FROM ${recyclingRecordsTable.date}::date)::integer`,
+      totalKg: sql<number>`COALESCE(SUM(${recyclingRecordsTable.weightKg}), 0)::float`,
+      totalRecords: sql<number>`COUNT(*)::integer`,
+    })
+    .from(recyclingRecordsTable)
+    .where(sql`EXTRACT(YEAR FROM ${recyclingRecordsTable.date}::date) = ${year}`)
+    .groupBy(
+      sql`EXTRACT(MONTH FROM ${recyclingRecordsTable.date}::date)`,
+      sql`EXTRACT(YEAR  FROM ${recyclingRecordsTable.date}::date)`,
+    )
+    .orderBy(sql`EXTRACT(MONTH FROM ${recyclingRecordsTable.date}::date)`);
 
-  const result = (rows as any[]).map((r: any) => ({
-    month: parseInt(r.month),
-    year: parseInt(r.year),
-    monthLabel: MONTH_LABELS[parseInt(r.month) - 1],
-    totalKg: parseFloat(r.total_kg),
-    totalRecords: parseInt(r.total_records),
+  const result = rows.map((r) => ({
+    month: Number(r.month),
+    year:  Number(r.year),
+    monthLabel: MONTH_LABELS[Number(r.month) - 1],
+    totalKg: Number(r.totalKg),
+    totalRecords: Number(r.totalRecords),
   }));
 
   res.json(GetDashboardMonthlyStatsResponse.parse(result));
@@ -116,26 +119,25 @@ router.get("/dashboard/recent-activity", async (req, res): Promise<void> => {
 router.get("/dashboard/material-breakdown", async (req, res): Promise<void> => {
   if (!await requireAuth(req, res)) return;
 
-  const rawBreakdown = await db.execute(sql`
-    SELECT
-      rr.material_id,
-      m.name AS material_name,
-      m.bin_color,
-      COALESCE(SUM(rr.weight_kg), 0)::float AS total_kg,
-      COUNT(rr.id)::integer AS total_records
-    FROM recycling_records rr
-    JOIN materials m ON m.id = rr.material_id
-    GROUP BY rr.material_id, m.name, m.bin_color
-    ORDER BY total_kg DESC
-  `);
-  const breakdownRows = (rawBreakdown as any).rows ?? (rawBreakdown as any) ?? [];
+  const rows = await db
+    .select({
+      materialId:   materialsTable.id,
+      materialName: materialsTable.name,
+      binColor:     materialsTable.binColor,
+      totalKg:      sql<number>`COALESCE(SUM(${recyclingRecordsTable.weightKg}), 0)::float`,
+      totalRecords: sql<number>`COUNT(${recyclingRecordsTable.id})::integer`,
+    })
+    .from(recyclingRecordsTable)
+    .innerJoin(materialsTable, eq(materialsTable.id, recyclingRecordsTable.materialId))
+    .groupBy(recyclingRecordsTable.materialId, materialsTable.id, materialsTable.name, materialsTable.binColor)
+    .orderBy(sql`SUM(${recyclingRecordsTable.weightKg}) DESC`);
 
-  const result = (breakdownRows as any[]).map((r: any) => ({
-    materialId: parseInt(r.material_id),
-    materialName: r.material_name,
-    binColor: r.bin_color,
-    totalKg: parseFloat(r.total_kg),
-    totalRecords: parseInt(r.total_records),
+  const result = rows.map((r) => ({
+    materialId:   r.materialId,
+    materialName: r.materialName,
+    binColor:     r.binColor,
+    totalKg:      Number(r.totalKg),
+    totalRecords: Number(r.totalRecords),
   }));
 
   res.json(GetDashboardMaterialBreakdownResponse.parse(result));
