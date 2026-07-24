@@ -6,7 +6,7 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Leaf, Loader2, Mail, Lock, Recycle, Wind, Droplets } from "lucide-react";
+import { Leaf, Loader2, Mail, Lock, Recycle, Building, BarChart3 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const loginSchema = z.object({
@@ -14,10 +14,10 @@ const loginSchema = z.object({
   password: z.string().min(1, "La contraseña es obligatoria"),
 });
 
-const IMPACT_STATS = [
-  { icon: Recycle, value: "12.4 t", label: "Material reciclado" },
-  { icon: Wind, value: "31 t", label: "CO₂ evitado" },
-  { icon: Droplets, value: "124 m³", label: "Agua ahorrada" },
+const FEATURE_CARDS = [
+  { icon: Building, label: "Conjuntos\nResidenciales" },
+  { icon: Recycle, label: "Materiales\nReciclables" },
+  { icon: BarChart3, label: "Reportes\nEstadísticos" },
 ];
 
 export default function Login() {
@@ -71,17 +71,21 @@ export default function Login() {
 
         <div>
           <div className="grid grid-cols-3 gap-4 mb-8">
-            {IMPACT_STATS.map(({ icon: Icon, value, label }) => (
+            {FEATURE_CARDS.map(({ icon: Icon, label }) => (
               <div key={label} className="bg-white/10 rounded-xl p-3 text-center">
-                <Icon className="w-4 h-4 mx-auto mb-1 text-emerald-200" />
-                <p className="text-xl font-bold">{value}</p>
-                <p className="text-[10px] text-emerald-200 leading-tight">{label}</p>
+                <Icon className="w-4 h-4 mx-auto mb-2 text-emerald-200" />
+                <p className="text-[10px] text-emerald-100 leading-snug whitespace-pre-line">{label}</p>
               </div>
             ))}
           </div>
-          <p className="text-[11px] text-emerald-300">
-            © 2025 EcoRecicla Bogotá · Proyecto Universitario · v1.0
-          </p>
+          <div className="space-y-0.5">
+            <p className="text-[11px] text-emerald-300 font-medium">© 2025 EcoRecicla Bogotá</p>
+            <p className="text-[10px] text-emerald-400 leading-relaxed">
+              Proyecto de Grado · Ingeniería de Sistemas<br />
+              Universidad Nacional Abierta y a Distancia – UNAD<br />
+              Versión 1.0
+            </p>
+          </div>
         </div>
       </div>
 
