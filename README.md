@@ -53,19 +53,11 @@ https://github.com/tatianadiaz2816-hub/EcoRecicla-Bogota
 - Base de datos: PostgreSQL
 - Comunicación mediante API REST
 
-# Capturas del sistema
-
-(Aquí dejas todas las imágenes que ya agregaste)
-
----
-
 ## Autora
-
 **Julieth Tatiana Vanegas Díaz**
-
 Ingeniería de Sistemas
-
 Universidad Nacional Abierta y a Distancia – UNAD
+
 # Capturas del sistema
 ## Inicio de sesión
 ![Login](docs/images/Login.png)
