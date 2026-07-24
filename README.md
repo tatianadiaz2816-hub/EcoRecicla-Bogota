@@ -67,7 +67,6 @@ Ingeniería de Sistemas
 
 Universidad Nacional Abierta y a Distancia – UNAD
 # Capturas del sistema
-
 ## Inicio de sesión
 ![Login](docs/images/Login.png)
 
