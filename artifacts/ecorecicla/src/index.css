@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @plugin "@tailwindcss/typography";
@@ -71,70 +71,68 @@
 :root {
   --button-outline: rgba(0, 0, 0, 0.1);
   --badge-outline: rgba(0, 0, 0, 0.05);
-
   --opaque-button-border-intensity: -8; 
-
   --elevate-1: rgba(0, 0, 0, 0.03);
   --elevate-2: rgba(0, 0, 0, 0.08);
 
-  --background: 210 20% 98%;
-  --foreground: 222 47% 11%;
+  --background: 220 20% 97%;
+  --foreground: 220 35% 12%;
   
   --card: 0 0% 100%;
-  --card-foreground: 222 47% 11%;
-  --card-border: 214 32% 91%;
+  --card-foreground: 220 35% 12%;
+  --card-border: 220 20% 90%;
   
   --popover: 0 0% 100%;
-  --popover-foreground: 222 47% 11%;
-  --popover-border: 214 32% 91%;
+  --popover-foreground: 220 35% 12%;
+  --popover-border: 220 20% 90%;
   
-  --primary: 153 60% 35%;
+  --primary: 152 55% 33%;
   --primary-foreground: 0 0% 100%;
   
-  --secondary: 214 32% 91%;
-  --secondary-foreground: 222 47% 11%;
+  --secondary: 220 20% 90%;
+  --secondary-foreground: 220 35% 12%;
   
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 215 16% 47%;
+  --muted: 220 20% 95%;
+  --muted-foreground: 220 15% 50%;
   
-  --accent: 210 40% 96.1%;
-  --accent-foreground: 222 47% 11%;
+  --accent: 152 20% 93%;
+  --accent-foreground: 152 55% 25%;
   
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 210 40% 98%;
+  --destructive: 0 82% 58%;
+  --destructive-foreground: 0 0% 100%;
   
-  --border: 214 32% 91%;
-  --input: 214 32% 91%;
-  --ring: 153 60% 35%;
+  --border: 220 20% 88%;
+  --input: 220 20% 88%;
+  --ring: 152 55% 33%;
   
-  --sidebar: 0 0% 100%;
-  --sidebar-foreground: 222 47% 11%;
-  --sidebar-border: 214 32% 91%;
-  --sidebar-primary: 153 60% 35%;
+  --sidebar: 220 35% 12%;
+  --sidebar-foreground: 220 15% 85%;
+  --sidebar-border: 220 30% 18%;
+  --sidebar-primary: 152 55% 45%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 210 40% 96.1%;
-  --sidebar-accent-foreground: 222 47% 11%;
-  --sidebar-ring: 153 60% 35%;
+  --sidebar-accent: 220 30% 18%;
+  --sidebar-accent-foreground: 220 15% 85%;
+  --sidebar-ring: 152 55% 45%;
 
-  --chart-1: 153 60% 35%;
-  --chart-2: 212 100% 48%;
+  --chart-1: 152 55% 33%;
+  --chart-2: 215 90% 52%;
   --chart-3: 35 100% 55%;
   --chart-4: 280 65% 60%;
-  --chart-5: 0 84% 60%;
+  --chart-5: 0 82% 58%;
 
   --app-font-sans: 'Plus Jakarta Sans', sans-serif;
   --app-font-serif: Georgia, serif;
   --app-font-mono: Menlo, monospace;
-  --radius: 0.5rem;
+  --radius: 0.625rem;
   
-  --shadow-2xs: 0px 2px 0px 0px rgba(0,0,0,0.02);
-  --shadow-xs: 0px 2px 0px 0px rgba(0,0,0,0.04);
-  --shadow-sm: 0px 2px 0px 0px rgba(0,0,0,0.04), 0px 1px 2px -1px rgba(0,0,0,0.02);
-  --shadow: 0px 2px 0px 0px rgba(0,0,0,0.04), 0px 1px 2px -1px rgba(0,0,0,0.02);
-  --shadow-md: 0px 2px 0px 0px rgba(0,0,0,0.04), 0px 2px 4px -1px rgba(0,0,0,0.02);
-  --shadow-lg: 0px 2px 0px 0px rgba(0,0,0,0.04), 0px 4px 6px -1px rgba(0,0,0,0.02);
-  --shadow-xl: 0px 2px 0px 0px rgba(0,0,0,0.04), 0px 8px 10px -1px rgba(0,0,0,0.02);
-  --shadow-2xl: 0px 2px 0px 0px rgba(0,0,0,0.04);
+  --shadow-2xs: 0px 1px 2px 0px rgba(0,0,0,0.04);
+  --shadow-xs: 0px 1px 3px 0px rgba(0,0,0,0.06);
+  --shadow-sm: 0px 1px 3px 0px rgba(0,0,0,0.07), 0px 1px 2px -1px rgba(0,0,0,0.04);
+  --shadow: 0px 2px 6px 0px rgba(0,0,0,0.07), 0px 1px 3px -1px rgba(0,0,0,0.04);
+  --shadow-md: 0px 4px 12px 0px rgba(0,0,0,0.08), 0px 2px 6px -2px rgba(0,0,0,0.05);
+  --shadow-lg: 0px 8px 20px 0px rgba(0,0,0,0.09), 0px 4px 8px -4px rgba(0,0,0,0.05);
+  --shadow-xl: 0px 16px 32px 0px rgba(0,0,0,0.10), 0px 8px 12px -8px rgba(0,0,0,0.05);
+  --shadow-2xl: 0px 24px 48px 0px rgba(0,0,0,0.12);
   --tracking-normal: 0em;
   --spacing: 0.25rem;
 
@@ -154,49 +152,49 @@
   --elevate-1: rgba(255, 255, 255, 0.04);
   --elevate-2: rgba(255, 255, 255, 0.09);
 
-  --background: 222 47% 11%;
-  --foreground: 210 40% 98%;
-  --border: 216 34% 17%;
-  --card: 222 47% 11%;
-  --card-foreground: 210 40% 98%;
-  --card-border: 216 34% 17%;
-  --sidebar: 222 47% 11%;
-  --sidebar-foreground: 210 40% 98%;
-  --sidebar-border: 216 34% 17%;
-  --sidebar-primary: 153 60% 35%;
+  --background: 220 35% 10%;
+  --foreground: 220 15% 92%;
+  --border: 220 25% 18%;
+  --card: 220 35% 13%;
+  --card-foreground: 220 15% 92%;
+  --card-border: 220 25% 18%;
+  --sidebar: 220 40% 8%;
+  --sidebar-foreground: 220 15% 85%;
+  --sidebar-border: 220 30% 14%;
+  --sidebar-primary: 152 55% 45%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 216 34% 17%;
-  --sidebar-accent-foreground: 210 40% 98%;
-  --sidebar-ring: 153 60% 35%;
-  --popover: 222 47% 11%;
-  --popover-foreground: 210 40% 98%;
-  --popover-border: 216 34% 17%;
-  --primary: 153 60% 35%;
+  --sidebar-accent: 220 30% 15%;
+  --sidebar-accent-foreground: 220 15% 85%;
+  --sidebar-ring: 152 55% 45%;
+  --popover: 220 35% 13%;
+  --popover-foreground: 220 15% 92%;
+  --popover-border: 220 25% 18%;
+  --primary: 152 55% 42%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 216 34% 17%;
-  --secondary-foreground: 210 40% 98%;
-  --muted: 216 34% 17%;
-  --muted-foreground: 215 20.2% 65.1%;
-  --accent: 216 34% 17%;
-  --accent-foreground: 210 40% 98%;
+  --secondary: 220 25% 18%;
+  --secondary-foreground: 220 15% 92%;
+  --muted: 220 25% 17%;
+  --muted-foreground: 220 15% 58%;
+  --accent: 152 20% 18%;
+  --accent-foreground: 152 55% 65%;
   --destructive: 0 62.8% 30.6%;
   --destructive-foreground: 210 40% 98%;
-  --input: 216 34% 17%;
-  --ring: 153 60% 35%;
-  --chart-1: 153 60% 35%;
-  --chart-2: 212 100% 48%;
-  --chart-3: 35 100% 55%;
-  --chart-4: 280 65% 60%;
-  --chart-5: 0 84% 60%;
+  --input: 220 25% 18%;
+  --ring: 152 55% 42%;
+  --chart-1: 152 55% 45%;
+  --chart-2: 215 90% 55%;
+  --chart-3: 35 100% 58%;
+  --chart-4: 280 65% 62%;
+  --chart-5: 0 82% 62%;
 
-  --shadow-2xs: 0px 2px 0px 0px rgba(0,0,0,0.2);
-  --shadow-xs: 0px 2px 0px 0px rgba(0,0,0,0.2);
-  --shadow-sm: 0px 2px 0px 0px rgba(0,0,0,0.2), 0px 1px 2px -1px rgba(0,0,0,0.2);
-  --shadow: 0px 2px 0px 0px rgba(0,0,0,0.2), 0px 1px 2px -1px rgba(0,0,0,0.2);
-  --shadow-md: 0px 2px 0px 0px rgba(0,0,0,0.2), 0px 2px 4px -1px rgba(0,0,0,0.2);
-  --shadow-lg: 0px 2px 0px 0px rgba(0,0,0,0.2), 0px 4px 6px -1px rgba(0,0,0,0.2);
-  --shadow-xl: 0px 2px 0px 0px rgba(0,0,0,0.2), 0px 8px 10px -1px rgba(0,0,0,0.2);
-  --shadow-2xl: 0px 2px 0px 0px rgba(0,0,0,0.2);
+  --shadow-2xs: 0px 1px 2px 0px rgba(0,0,0,0.3);
+  --shadow-xs: 0px 1px 3px 0px rgba(0,0,0,0.3);
+  --shadow-sm: 0px 1px 3px 0px rgba(0,0,0,0.3), 0px 1px 2px -1px rgba(0,0,0,0.3);
+  --shadow: 0px 2px 6px 0px rgba(0,0,0,0.3), 0px 1px 3px -1px rgba(0,0,0,0.3);
+  --shadow-md: 0px 4px 12px 0px rgba(0,0,0,0.3), 0px 2px 6px -2px rgba(0,0,0,0.3);
+  --shadow-lg: 0px 8px 20px 0px rgba(0,0,0,0.35), 0px 4px 8px -4px rgba(0,0,0,0.3);
+  --shadow-xl: 0px 16px 32px 0px rgba(0,0,0,0.4), 0px 8px 12px -8px rgba(0,0,0,0.3);
+  --shadow-2xl: 0px 24px 48px 0px rgba(0,0,0,0.45);
 }
 
 @layer base {
@@ -206,6 +204,11 @@
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
+  }
+
+  /* Smooth transitions on interactive elements */
+  a, button {
+    @apply transition-all duration-150;
   }
 }
 
@@ -241,18 +244,36 @@
     inset: -1px;
   }
 
+  /* ERP-grade fade-in animation */
+  @keyframes fade-in-up {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate-fade-in-up {
+    animation: fade-in-up 0.3s ease-out both;
+  }
+  .animate-fade-in-up-1 { animation-delay: 0.05s; }
+  .animate-fade-in-up-2 { animation-delay: 0.10s; }
+  .animate-fade-in-up-3 { animation-delay: 0.15s; }
+  .animate-fade-in-up-4 { animation-delay: 0.20s; }
+  .animate-fade-in-up-5 { animation-delay: 0.25s; }
+
+  @keyframes count-up {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  .animate-count-up {
+    animation: count-up 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+
+  /* Sidebar transition */
+  .sidebar-transition {
+    transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
   @media print {
-    body * {
-      visibility: hidden;
-    }
-    #print-root, #print-root * {
-      visibility: visible;
-    }
-    #print-root {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 100%;
-    }
+    body * { visibility: hidden; }
+    #print-root, #print-root * { visibility: visible; }
+    #print-root { position: absolute; left: 0; top: 0; width: 100%; }
   }
 }

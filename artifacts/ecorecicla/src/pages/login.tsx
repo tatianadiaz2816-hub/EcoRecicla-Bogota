@@ -6,13 +6,19 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Recycle, Loader2 } from "lucide-react";
+import { Leaf, Loader2, Mail, Lock, Recycle, Wind, Droplets } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const loginSchema = z.object({
   email: z.string().email("Por favor ingrese un correo electrónico válido"),
   password: z.string().min(1, "La contraseña es obligatoria"),
 });
+
+const IMPACT_STATS = [
+  { icon: Recycle, value: "12.4 t", label: "Material reciclado" },
+  { icon: Wind, value: "31 t", label: "CO₂ evitado" },
+  { icon: Droplets, value: "124 m³", label: "Agua ahorrada" },
+];
 
 export default function Login() {
   const [, setLocation] = useLocation();
@@ -21,10 +27,7 @@ export default function Login() {
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
+    defaultValues: { email: "", password: "" },
   });
 
   const onSubmit = (values: z.infer<typeof loginSchema>) => {
@@ -37,69 +40,115 @@ export default function Login() {
         toast({
           variant: "destructive",
           title: "Error al iniciar sesión",
-          description: "Correo electrónico o contraseña incorrectos. Por favor intente de nuevo.",
+          description: "Correo electrónico o contraseña incorrectos.",
         });
       }
     });
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <div className="w-full max-w-md bg-card border border-border shadow-xl rounded-xl p-8">
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-            <Recycle className="w-8 h-8 text-primary" />
+    <div className="min-h-screen flex bg-background">
+      {/* Left panel — brand */}
+      <div className="hidden lg:flex flex-col justify-between w-[420px] xl:w-[480px] bg-gradient-to-br from-emerald-800 via-emerald-700 to-teal-600 p-10 text-white shrink-0">
+        <div>
+          <div className="flex items-center gap-3 mb-16">
+            <div className="w-10 h-10 bg-white/15 rounded-xl flex items-center justify-center">
+              <Leaf className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <p className="font-bold text-lg leading-tight">EcoRecicla Bogotá</p>
+              <p className="text-xs text-emerald-200 leading-tight">Sistema de Gestión de Reciclaje</p>
+            </div>
           </div>
-          <h1 className="text-2xl font-bold text-foreground">EcoRecicla Bogotá</h1>
-          <p className="text-muted-foreground text-sm mt-1">Sistema de Gestión de Reciclaje</p>
+
+          <h2 className="text-3xl xl:text-4xl font-bold leading-tight mb-4">
+            Gestión inteligente del reciclaje residencial
+          </h2>
+          <p className="text-emerald-100 text-sm leading-relaxed">
+            Monitoree el impacto ambiental, coordine jornadas de recolección y analice el comportamiento de reciclaje en conjuntos residenciales de Bogotá.
+          </p>
         </div>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
+        <div>
+          <div className="grid grid-cols-3 gap-4 mb-8">
+            {IMPACT_STATS.map(({ icon: Icon, value, label }) => (
+              <div key={label} className="bg-white/10 rounded-xl p-3 text-center">
+                <Icon className="w-4 h-4 mx-auto mb-1 text-emerald-200" />
+                <p className="text-xl font-bold">{value}</p>
+                <p className="text-[10px] text-emerald-200 leading-tight">{label}</p>
+              </div>
+            ))}
+          </div>
+          <p className="text-[11px] text-emerald-300">
+            © 2025 EcoRecicla Bogotá · Proyecto Universitario · v1.0
+          </p>
+        </div>
+      </div>
+
+      {/* Right panel — form */}
+      <div className="flex-1 flex items-center justify-center px-4 py-12">
+        <div className="w-full max-w-md">
+          {/* Mobile logo */}
+          <div className="flex items-center justify-center gap-2.5 mb-10 lg:hidden">
+            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
+              <Leaf className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <p className="font-bold text-lg leading-tight">EcoRecicla Bogotá</p>
+              <p className="text-xs text-muted-foreground">Sistema de Gestión de Reciclaje</p>
+            </div>
+          </div>
+
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold text-foreground">Iniciar sesión</h1>
+            <p className="text-muted-foreground text-sm mt-1">Ingrese sus credenciales institucionales para continuar.</p>
+          </div>
+
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+              <FormField control={form.control} name="email" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Correo electrónico</FormLabel>
+                  <FormLabel className="text-sm font-medium">Correo electrónico</FormLabel>
                   <FormControl>
-                    <Input placeholder="admin@ecorecicla.gov.co" {...field} />
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input placeholder="admin@ecorecicla.gov.co" className="pl-9 h-11" {...field} />
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
+              )} />
+
+              <FormField control={form.control} name="password" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Contraseña</FormLabel>
+                  <FormLabel className="text-sm font-medium">Contraseña</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="••••••••" {...field} />
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input type="password" placeholder="••••••••" className="pl-9 h-11" {...field} />
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
-              )}
-            />
-            <Button 
-              type="submit" 
-              className="w-full" 
-              size="lg"
-              disabled={loginMutation.isPending}
-            >
-              {loginMutation.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Autenticando...
-                </>
-              ) : "Iniciar sesión"}
-            </Button>
-          </form>
-        </Form>
-        
-        <div className="mt-8 text-center text-xs text-muted-foreground">
-          <p>Solo personal autorizado.</p>
+              )} />
+
+              <Button type="submit" className="w-full h-11 text-sm font-semibold shadow-sm" disabled={loginMutation.isPending}>
+                {loginMutation.isPending ? (
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Autenticando...</>
+                ) : "Ingresar al sistema"}
+              </Button>
+            </form>
+          </Form>
+
+          <div className="mt-8 p-4 bg-muted/50 rounded-lg border border-border/50">
+            <p className="text-xs font-semibold text-muted-foreground mb-2">Credenciales de demo:</p>
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground"><span className="font-medium text-foreground">Administrador:</span> admin@ecorecicla.com · admin123</p>
+              <p className="text-xs text-muted-foreground"><span className="font-medium text-foreground">Residente:</span> maria.garcia@email.com · resident123</p>
+            </div>
+          </div>
+
+          <p className="text-center text-xs text-muted-foreground mt-6">Solo personal autorizado. Acceso restringido.</p>
         </div>
       </div>
     </div>

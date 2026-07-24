@@ -51,7 +51,7 @@ router.get("/dashboard/monthly-stats", async (req, res): Promise<void> => {
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
   const year = parsed.data.year ?? new Date().getFullYear();
 
-  const rows = await db.execute(sql`
+  const rawMonthly = await db.execute(sql`
     SELECT
       EXTRACT(MONTH FROM date::date)::integer AS month,
       EXTRACT(YEAR FROM date::date)::integer AS year,
@@ -62,8 +62,9 @@ router.get("/dashboard/monthly-stats", async (req, res): Promise<void> => {
     GROUP BY month, year
     ORDER BY month
   `);
+  const rows = (rawMonthly as any).rows ?? (rawMonthly as any) ?? [];
 
-  const result = (rows as unknown as any[]).map((r: any) => ({
+  const result = (rows as any[]).map((r: any) => ({
     month: parseInt(r.month),
     year: parseInt(r.year),
     monthLabel: MONTH_LABELS[parseInt(r.month) - 1],
@@ -115,7 +116,7 @@ router.get("/dashboard/recent-activity", async (req, res): Promise<void> => {
 router.get("/dashboard/material-breakdown", async (req, res): Promise<void> => {
   if (!await requireAuth(req, res)) return;
 
-  const rows = await db.execute(sql`
+  const rawBreakdown = await db.execute(sql`
     SELECT
       rr.material_id,
       m.name AS material_name,
@@ -127,8 +128,9 @@ router.get("/dashboard/material-breakdown", async (req, res): Promise<void> => {
     GROUP BY rr.material_id, m.name, m.bin_color
     ORDER BY total_kg DESC
   `);
+  const breakdownRows = (rawBreakdown as any).rows ?? (rawBreakdown as any) ?? [];
 
-  const result = (rows as unknown as any[]).map((r: any) => ({
+  const result = (breakdownRows as any[]).map((r: any) => ({
     materialId: parseInt(r.material_id),
     materialName: r.material_name,
     binColor: r.bin_color,

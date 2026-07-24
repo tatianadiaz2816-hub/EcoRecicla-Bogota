@@ -1,239 +1,375 @@
-import { useGetDashboardStats, useGetDashboardMonthlyStats, useGetDashboardRecentActivity, useGetDashboardMaterialBreakdown } from "@workspace/api-client-react";
+import { useGetDashboardStats, useGetDashboardMonthlyStats, useGetDashboardRecentActivity, useGetDashboardMaterialBreakdown, useGetMe, useListEvents } from "@workspace/api-client-react";
 import { formatWeight, formatDate, BIN_COLORS } from "@/lib/utils-eco";
 import { 
-  Users, 
-  Building2, 
-  CalendarDays, 
-  FileText, 
-  Recycle, 
-  Scale,
-  Activity,
-  ArrowRight
+  Users, Building2, CalendarDays, FileText, Recycle, Scale,
+  Activity, ArrowRight, TrendingUp, Leaf, Droplets, Wind,
+  Clock, MapPin, Plus, Star, ChevronRight
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Legend
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend, AreaChart, Area
 } from "recharts";
+import { cn } from "@/lib/utils";
+
+const EVENT_STATUS_MAP: Record<string, { label: string; cls: string }> = {
+  scheduled: { label: "Programada", cls: "bg-blue-100 text-blue-700 border-blue-200" },
+  completed: { label: "Completada", cls: "bg-green-100 text-green-700 border-green-200" },
+  cancelled: { label: "Cancelada", cls: "bg-red-100 text-red-700 border-red-200" },
+};
+
+function getBinColor(binColor: string) {
+  const map: Record<string, string> = {
+    blue: "#3b82f6", green: "#16a34a", yellow: "#ca8a04", red: "#ef4444",
+    gray: "#6b7280", brown: "#92400e", white: "#94a3b8", orange: "#f97316",
+  };
+  return map[binColor] || "#16a34a";
+}
 
 export default function Dashboard() {
+  const { data: me } = useGetMe();
   const { data: stats, isLoading: statsLoading } = useGetDashboardStats();
   const { data: monthlyStats, isLoading: monthlyLoading } = useGetDashboardMonthlyStats();
   const { data: recentActivity, isLoading: activityLoading } = useGetDashboardRecentActivity();
   const { data: materialBreakdown, isLoading: breakdownLoading } = useGetDashboardMaterialBreakdown();
+  const { data: upcomingEventsData, isLoading: eventsLoading } = useListEvents({ status: "scheduled", pageSize: 4, page: 1 });
+
+  const upcomingEvents = upcomingEventsData?.data || [];
+
+  const now = new Date();
+  const dateStr = now.toLocaleDateString("es-CO", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+  const dateFormatted = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
+
+  const totalKg = stats?.totalKgRecycled || 0;
+  const co2Evitado = (totalKg * 2.5).toFixed(1);
+  const arboles = Math.round(totalKg * 2.5 / 21);
+  const aguaAhorrada = Math.round(totalKg * 10);
+
+  const statCards = [
+    { title: "Total Reciclado", value: statsLoading ? null : formatWeight(totalKg), desc: "Peso acumulado histórico", icon: Scale, color: "text-emerald-600", bg: "bg-emerald-50 border-emerald-100", iconBg: "bg-emerald-100" },
+    { title: "Registros", value: statsLoading ? null : stats?.totalRecords.toLocaleString("es-CO"), desc: "Entregas registradas", icon: FileText, color: "text-blue-600", bg: "bg-blue-50 border-blue-100", iconBg: "bg-blue-100" },
+    { title: "Residentes", value: statsLoading ? null : stats?.totalResidents.toLocaleString("es-CO"), desc: "Participantes activos", icon: Users, color: "text-violet-600", bg: "bg-violet-50 border-violet-100", iconBg: "bg-violet-100" },
+    { title: "Conjuntos", value: statsLoading ? null : stats?.totalComplexes.toLocaleString("es-CO"), desc: "Edificios vinculados", icon: Building2, color: "text-orange-600", bg: "bg-orange-50 border-orange-100", iconBg: "bg-orange-100" },
+    { title: "Jornadas", value: statsLoading ? null : stats?.totalEvents.toLocaleString("es-CO"), desc: "Programadas o completadas", icon: CalendarDays, color: "text-cyan-600", bg: "bg-cyan-50 border-cyan-100", iconBg: "bg-cyan-100" },
+    { title: "Materiales", value: statsLoading ? null : stats?.totalMaterials.toLocaleString("es-CO"), desc: "Categorías disponibles", icon: Recycle, color: "text-pink-600", bg: "bg-pink-50 border-pink-100", iconBg: "bg-pink-100" },
+  ];
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="space-y-6 animate-fade-in-up">
+      {/* BIENVENIDA */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Panel de Control</h1>
-          <p className="text-muted-foreground mt-1">Resumen del impacto del programa de reciclaje.</p>
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{dateFormatted}</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+            Bienvenido, {me?.fullName?.split(" ")[0] || "Administrador"} 👋
+          </h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Aquí está el resumen de impacto del programa de reciclaje de Bogotá.
+          </p>
         </div>
         <Link href="/records">
-          <Button>
-            Registrar Reciclaje
+          <Button className="gap-2 shadow-sm">
+            <Plus className="w-4 h-4" /> Registrar Reciclaje
           </Button>
         </Link>
       </div>
 
       {/* TARJETAS DE ESTADÍSTICAS */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <StatCard title="Total Reciclado" icon={Scale} value={statsLoading ? null : formatWeight(stats?.totalKgRecycled)} desc="Peso acumulado en todos los conjuntos" highlight />
-        <StatCard title="Total de Registros" icon={FileText} value={statsLoading ? null : stats?.totalRecords.toLocaleString()} desc="Jornadas de reciclaje registradas" />
-        <StatCard title="Total de Materiales" icon={Recycle} value={statsLoading ? null : stats?.totalMaterials.toLocaleString()} desc="Categorías de materiales activas" />
-        <StatCard title="Residentes Participantes" icon={Users} value={statsLoading ? null : stats?.totalResidents.toLocaleString()} desc="Registrados en el sistema" />
-        <StatCard title="Conjuntos Activos" icon={Building2} value={statsLoading ? null : stats?.totalComplexes.toLocaleString()} desc="Edificios residenciales vinculados" />
-        <StatCard title="Jornadas de Recolección" icon={CalendarDays} value={statsLoading ? null : stats?.totalEvents.toLocaleString()} desc="Programadas o completadas" />
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        {statCards.map((card, i) => {
+          const Icon = card.icon;
+          return (
+            <Card key={card.title} className={cn("border animate-fade-in-up shadow-sm hover:shadow-md transition-shadow", card.bg, `animate-fade-in-up-${i + 1}`)}>
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div className={cn("p-2 rounded-lg", card.iconBg)}>
+                    <Icon className={cn("w-4 h-4", card.color)} />
+                  </div>
+                  <TrendingUp className={cn("w-3 h-3 opacity-50", card.color)} />
+                </div>
+                {card.value === null ? (
+                  <Skeleton className="h-7 w-20 mb-1" />
+                ) : (
+                  <p className={cn("text-xl font-bold animate-count-up", card.color)}>{card.value}</p>
+                )}
+                <p className="text-xs text-muted-foreground mt-0.5 leading-snug">{card.desc}</p>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        {/* GRÁFICA: MENSUAL */}
+      {/* GRÁFICAS */}
+      <div className="grid gap-5 lg:grid-cols-7">
+        {/* Área mensual */}
         <Card className="lg:col-span-4 shadow-sm">
-          <CardHeader>
-            <CardTitle>Impacto Mensual</CardTitle>
-            <CardDescription>Kilogramos reciclados durante el año en curso</CardDescription>
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-base">Impacto Mensual</CardTitle>
+                <CardDescription className="text-xs">Kilogramos reciclados en el año en curso</CardDescription>
+              </div>
+              <Link href="/reports">
+                <Button variant="ghost" size="sm" className="text-xs gap-1 h-7">
+                  Ver reporte <ChevronRight className="w-3 h-3" />
+                </Button>
+              </Link>
+            </div>
           </CardHeader>
-          <CardContent className="pl-0">
+          <CardContent className="pl-0 pt-0">
             {monthlyLoading ? (
-              <Skeleton className="h-[300px] w-full ml-4" />
+              <Skeleton className="h-[260px] w-full ml-4" />
             ) : (
-              <div className="h-[300px] w-full">
+              <div className="h-[260px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={monthlyStats || []} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                  <AreaChart data={monthlyStats || []} margin={{ top: 5, right: 20, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorKg" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.15} />
+                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                    <XAxis dataKey="monthLabel" tickLine={false} axisLine={false} tickMargin={10} fontSize={12} stroke="hsl(var(--muted-foreground))" />
-                    <YAxis tickLine={false} axisLine={false} tickMargin={10} fontSize={12} stroke="hsl(var(--muted-foreground))" tickFormatter={(v) => `${v}kg`} />
-                    <Tooltip 
-                      cursor={{ fill: 'hsl(var(--muted))', opacity: 0.4 }}
-                      contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))' }}
-                      formatter={(value: number) => [`${value} kg`, 'Reciclado']}
+                    <XAxis dataKey="monthLabel" tickLine={false} axisLine={false} tickMargin={8} fontSize={11} stroke="hsl(var(--muted-foreground))" />
+                    <YAxis tickLine={false} axisLine={false} tickMargin={8} fontSize={11} stroke="hsl(var(--muted-foreground))" tickFormatter={(v) => `${v}kg`} />
+                    <Tooltip
+                      cursor={{ stroke: "hsl(var(--primary))", strokeWidth: 1, strokeDasharray: "4 4" }}
+                      contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))", fontSize: "12px" }}
+                      formatter={(value: number) => [`${value} kg`, "Reciclado"]}
                     />
-                    <Bar dataKey="totalKg" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={50} />
-                  </BarChart>
+                    <Area dataKey="totalKg" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#colorKg)" dot={{ r: 3, fill: "hsl(var(--primary))" }} activeDot={{ r: 5 }} />
+                  </AreaChart>
                 </ResponsiveContainer>
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* GRÁFICA: DISTRIBUCIÓN POR MATERIAL */}
+        {/* Pie por material */}
         <Card className="lg:col-span-3 shadow-sm">
-          <CardHeader>
-            <CardTitle>Distribución por Material</CardTitle>
-            <CardDescription>Materiales reciclados por peso</CardDescription>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Por Material</CardTitle>
+            <CardDescription className="text-xs">Distribución del total reciclado</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0">
             {breakdownLoading ? (
-              <Skeleton className="h-[300px] w-full" />
+              <Skeleton className="h-[260px] w-full" />
+            ) : !materialBreakdown?.length ? (
+              <div className="h-[260px] flex flex-col items-center justify-center text-muted-foreground">
+                <Recycle className="h-10 w-10 mb-2 opacity-20" />
+                <p className="text-sm">Sin datos disponibles</p>
+              </div>
             ) : (
-              <div className="h-[300px] w-full flex items-center justify-center">
-                {(!materialBreakdown || materialBreakdown.length === 0) ? (
-                  <div className="text-muted-foreground text-sm flex flex-col items-center">
-                    <Recycle className="h-8 w-8 mb-2 opacity-20" />
-                    Aún no hay datos disponibles
-                  </div>
-                ) : (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={materialBreakdown}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={100}
-                        paddingAngle={2}
-                        dataKey="totalKg"
-                        nameKey="materialName"
-                      >
-                        {materialBreakdown.map((entry, index) => {
-                          let color = "#10b981";
-                          if (entry.binColor === "blue") color = "#3b82f6";
-                          if (entry.binColor === "green") color = "#10b981";
-                          if (entry.binColor === "yellow") color = "#facc15";
-                          if (entry.binColor === "red") color = "#ef4444";
-                          if (entry.binColor === "gray") color = "#6b7280";
-                          if (entry.binColor === "brown") color = "#92400e";
-                          if (entry.binColor === "white") color = "#e2e8f0";
-                          if (entry.binColor === "orange") color = "#f97316";
-                          return <Cell key={`cell-${index}`} fill={color} />;
-                        })}
-                      </Pie>
-                      <Tooltip formatter={(value: number) => [`${value} kg`, 'Peso']} />
-                      <Legend verticalAlign="bottom" height={36} iconType="circle" />
-                    </PieChart>
-                  </ResponsiveContainer>
-                )}
+              <div className="h-[260px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={materialBreakdown} cx="50%" cy="45%" innerRadius={55} outerRadius={90} paddingAngle={3} dataKey="totalKg" nameKey="materialName">
+                      {materialBreakdown.map((entry, idx) => (
+                        <Cell key={idx} fill={getBinColor(entry.binColor)} stroke="transparent" />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(v: number) => [`${v.toFixed(2)} kg`, "Peso"]} contentStyle={{ borderRadius: "8px", fontSize: "12px" }} />
+                    <Legend verticalAlign="bottom" height={30} iconType="circle" iconSize={8} formatter={(v) => <span style={{ fontSize: 11 }}>{v}</span>} />
+                  </PieChart>
+                </ResponsiveContainer>
               </div>
             )}
           </CardContent>
         </Card>
       </div>
 
-      {/* ACTIVIDAD RECIENTE */}
-      <Card className="shadow-sm">
-        <CardHeader className="flex flex-row items-center justify-between border-b pb-4">
-          <div>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Activity className="h-5 w-5 text-primary" />
-              Actividad Reciente
-            </CardTitle>
-            <CardDescription>Últimas interacciones del sistema en todos los conjuntos.</CardDescription>
-          </div>
-          <Link href="/records">
-            <Button variant="ghost" size="sm" className="hidden sm:flex gap-1">
-              Ver todo <ArrowRight className="h-4 w-4" />
-            </Button>
-          </Link>
-        </CardHeader>
-        <CardContent className="pt-6">
-          {activityLoading ? (
-            <div className="space-y-4">
-              {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-12 w-full" />)}
+      {/* IMPACTO AMBIENTAL */}
+      <Card className="shadow-sm bg-gradient-to-r from-emerald-600 to-teal-600 border-0 text-white">
+        <CardContent className="p-5">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <Leaf className="w-5 h-5 text-emerald-200" />
+                <p className="font-semibold text-sm text-emerald-100">Impacto Ambiental Acumulado</p>
+              </div>
+              <p className="text-xs text-emerald-200">Estimaciones basadas en el material reciclado total</p>
             </div>
-          ) : !recentActivity || recentActivity.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No hay actividad reciente para mostrar.
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {recentActivity.map((activity) => (
-                <div key={activity.id} className="flex gap-4">
-                  <div className="mt-0.5">
-                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Activity className="h-4 w-4 text-primary" />
-                    </div>
-                  </div>
-                  <div className="flex-1 space-y-1">
-                    <p className="text-sm font-medium leading-none">
-                      {activity.description}
-                    </p>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span>{formatDate(activity.createdAt)}</span>
-                      {activity.weightKg != null && (
-                        <>
-                          <span>•</span>
-                          <span className="font-medium text-foreground">{formatWeight(activity.weightKg)} {activity.materialName}</span>
-                        </>
-                      )}
-                      {activity.residentName && (
-                        <>
-                          <span>•</span>
-                          <span>por {activity.residentName}</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
+            <div className="grid grid-cols-3 gap-6">
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  <Wind className="w-4 h-4 text-emerald-200" />
+                  <span className="text-xs text-emerald-200">CO₂ evitado</span>
                 </div>
-              ))}
+                {statsLoading ? <Skeleton className="h-7 w-16 mx-auto bg-white/20" /> : (
+                  <p className="text-2xl font-bold">{parseFloat(co2Evitado).toLocaleString("es-CO")} kg</p>
+                )}
+              </div>
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  <Leaf className="w-4 h-4 text-emerald-200" />
+                  <span className="text-xs text-emerald-200">Árboles equiv.</span>
+                </div>
+                {statsLoading ? <Skeleton className="h-7 w-12 mx-auto bg-white/20" /> : (
+                  <p className="text-2xl font-bold">{arboles.toLocaleString("es-CO")}</p>
+                )}
+              </div>
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  <Droplets className="w-4 h-4 text-emerald-200" />
+                  <span className="text-xs text-emerald-200">Agua ahorrada</span>
+                </div>
+                {statsLoading ? <Skeleton className="h-7 w-20 mx-auto bg-white/20" /> : (
+                  <p className="text-2xl font-bold">{(aguaAhorrada / 1000).toFixed(1)} m³</p>
+                )}
+              </div>
             </div>
-          )}
+          </div>
         </CardContent>
       </Card>
-    </div>
-  );
-}
 
-function StatCard({ 
-  title, 
-  value, 
-  desc, 
-  icon: Icon,
-  highlight = false
-}: { 
-  title: string, 
-  value: string | null, 
-  desc: string, 
-  icon: any,
-  highlight?: boolean
-}) {
-  return (
-    <Card className={`shadow-sm ${highlight ? 'border-primary/50 bg-primary/5' : ''}`}>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-        <Icon className={`h-4 w-4 ${highlight ? 'text-primary' : 'text-muted-foreground'}`} />
-      </CardHeader>
-      <CardContent>
-        {value === null ? (
-          <Skeleton className="h-8 w-24 mb-1" />
-        ) : (
-          <div className={`text-2xl font-bold ${highlight ? 'text-primary' : 'text-foreground'}`}>{value}</div>
-        )}
-        <p className="text-xs text-muted-foreground mt-1">
-          {desc}
-        </p>
-      </CardContent>
-    </Card>
+      {/* JORNADAS PRÓXIMAS + ACTIVIDAD RECIENTE */}
+      <div className="grid gap-5 lg:grid-cols-5">
+        {/* Upcoming events */}
+        <Card className="lg:col-span-2 shadow-sm">
+          <CardHeader className="pb-3 flex flex-row items-center justify-between border-b">
+            <div>
+              <CardTitle className="text-base flex items-center gap-2">
+                <CalendarDays className="w-4 h-4 text-primary" /> Próximas Jornadas
+              </CardTitle>
+              <CardDescription className="text-xs mt-0.5">Recolecciones programadas</CardDescription>
+            </div>
+            <Link href="/events">
+              <Button variant="ghost" size="sm" className="h-7 text-xs gap-1">
+                Ver todas <ArrowRight className="w-3 h-3" />
+              </Button>
+            </Link>
+          </CardHeader>
+          <CardContent className="pt-4 space-y-3">
+            {eventsLoading ? (
+              [1,2,3].map(i => <Skeleton key={i} className="h-16 w-full" />)
+            ) : upcomingEvents.length === 0 ? (
+              <div className="text-center py-6 text-muted-foreground">
+                <CalendarDays className="w-8 h-8 mx-auto mb-2 opacity-20" />
+                <p className="text-sm">No hay jornadas próximas.</p>
+              </div>
+            ) : upcomingEvents.map((ev) => (
+              <div key={ev.id} className="flex items-start gap-3 p-3 rounded-lg bg-muted/40 hover:bg-muted/60 transition-colors">
+                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                  <CalendarDays className="w-4 h-4 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground truncate">{ev.eventName}</p>
+                  <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                    <Clock className="w-3 h-3" /> {formatDate(ev.date)} · {ev.hour}
+                  </p>
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <MapPin className="w-3 h-3" /> {ev.complexName}
+                  </p>
+                </div>
+                <span className={cn("text-[10px] font-medium px-2 py-0.5 rounded-full border", EVENT_STATUS_MAP[ev.status]?.cls || "bg-gray-100 text-gray-700")}>
+                  {EVENT_STATUS_MAP[ev.status]?.label || ev.status}
+                </span>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        {/* Actividad reciente */}
+        <Card className="lg:col-span-3 shadow-sm">
+          <CardHeader className="pb-3 flex flex-row items-center justify-between border-b">
+            <div>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Activity className="w-4 h-4 text-primary" /> Actividad Reciente
+              </CardTitle>
+              <CardDescription className="text-xs mt-0.5">Últimas entregas y registros del sistema</CardDescription>
+            </div>
+            <Link href="/records">
+              <Button variant="ghost" size="sm" className="h-7 text-xs gap-1">
+                Ver todo <ArrowRight className="w-3 h-3" />
+              </Button>
+            </Link>
+          </CardHeader>
+          <CardContent className="pt-4">
+            {activityLoading ? (
+              <div className="space-y-3">
+                {[1,2,3,4,5].map(i => <Skeleton key={i} className="h-14 w-full" />)}
+              </div>
+            ) : !recentActivity?.length ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <Activity className="w-8 h-8 mx-auto mb-2 opacity-20" />
+                <p className="text-sm">No hay actividad reciente.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {recentActivity.map((a, i) => (
+                  <div key={a.id} className={cn("flex items-start gap-3 p-3 rounded-lg border border-transparent hover:bg-muted/40 hover:border-border transition-all animate-fade-in-up", `animate-fade-in-up-${Math.min(i + 1, 5)}`)}>
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                      <Recycle className="w-3.5 h-3.5 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-foreground leading-snug">{a.description}</p>
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1">
+                        <span className="text-xs text-muted-foreground">{formatDate(a.createdAt)}</span>
+                        {a.weightKg != null && (
+                          <span className="text-xs font-semibold text-primary">{formatWeight(a.weightKg)} {a.materialName}</span>
+                        )}
+                        {a.residentName && (
+                          <span className="text-xs text-muted-foreground">por {a.residentName}</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* TOP MATERIALES */}
+      {!breakdownLoading && materialBreakdown && materialBreakdown.length > 0 && (
+        <Card className="shadow-sm">
+          <CardHeader className="pb-3 border-b">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Star className="w-4 h-4 text-primary" /> Materiales Más Reciclados
+                </CardTitle>
+                <CardDescription className="text-xs mt-0.5">Ranking por kilogramos totales entregados</CardDescription>
+              </div>
+              <Link href="/materials">
+                <Button variant="ghost" size="sm" className="h-7 text-xs gap-1">
+                  Catálogo <ChevronRight className="w-3 h-3" />
+                </Button>
+              </Link>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <div className="space-y-3">
+              {[...materialBreakdown]
+                .sort((a, b) => b.totalKg - a.totalKg)
+                .slice(0, 5)
+                .map((m, i) => {
+                  const pct = materialBreakdown.reduce((s, x) => s + x.totalKg, 0);
+                  const width = pct > 0 ? Math.round((m.totalKg / pct) * 100) : 0;
+                  return (
+                    <div key={m.materialName} className="flex items-center gap-4">
+                      <span className="text-xs font-bold text-muted-foreground w-5 shrink-0">#{i + 1}</span>
+                      <div className="flex items-center gap-2 w-36 shrink-0">
+                        <span className="w-3 h-3 rounded-full shrink-0" style={{ background: getBinColor(m.binColor) }} />
+                        <span className="text-sm font-medium truncate">{m.materialName}</span>
+                      </div>
+                      <div className="flex-1 bg-muted rounded-full h-2 overflow-hidden">
+                        <div className="h-2 rounded-full transition-all duration-700" style={{ width: `${width}%`, background: getBinColor(m.binColor) }} />
+                      </div>
+                      <span className="text-sm font-semibold text-foreground w-20 text-right shrink-0">{formatWeight(m.totalKg)}</span>
+                      <span className="text-xs text-muted-foreground w-10 text-right shrink-0">{width}%</span>
+                    </div>
+                  );
+                })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 }
