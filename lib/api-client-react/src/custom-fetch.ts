@@ -357,10 +357,28 @@ export async function customFetch<T = unknown>(
       headers.set("authorization", `Bearer ${token}`);
     }
   }
+  
+  if (!headers.has("authorization")) {
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("eco_token");
+      if (token) {
+        headers.set("authorization", `Bearer ${token}`);
+      }
+    }
+  }
 
   const requestInfo = { method, url: resolveUrl(input) };
 
   const response = await fetch(input, { ...init, method, headers });
+  
+  if (response.status === 401) {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("eco_token");
+      if (window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
+    }
+  }
 
   if (!response.ok) {
     const errorData = await parseErrorBody(response, method);

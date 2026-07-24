@@ -3,13 +3,32 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: EcoRecicla Bogotá API - Recycling Management System for Residential Complexes
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication operations
+  - name: users
+    description: User management
+  - name: complexes
+    description: Residential complex management
+  - name: materials
+    description: Recyclable materials management
+  - name: events
+    description: Collection events management
+  - name: records
+    description: Recycling records management
+  - name: dashboard
+    description: Dashboard statistics
+  - name: reports
+    description: Reporting
+  - name: profile
+    description: User profile management
+
 paths:
   /healthz:
     get:
@@ -24,6 +43,803 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # AUTH
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout
+      responses:
+        "200":
+          description: Logged out
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized
+
+  # USERS
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      summary: List all users
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: role
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: complexId
+          in: query
+          schema:
+            type: integer
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserListResponse"
+    post:
+      operationId: createUser
+      tags: [users]
+      summary: Create a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserInput"
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /users/{id}:
+    get:
+      operationId: getUser
+      tags: [users]
+      summary: Get a user by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateUser
+      tags: [users]
+      summary: Update a user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdate"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteUser
+      tags: [users]
+      summary: Delete a user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # RESIDENTIAL COMPLEXES
+  /complexes:
+    get:
+      operationId: listComplexes
+      tags: [complexes]
+      summary: List all residential complexes
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of complexes
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ComplexListResponse"
+    post:
+      operationId: createComplex
+      tags: [complexes]
+      summary: Create a residential complex
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ComplexInput"
+      responses:
+        "201":
+          description: Complex created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Complex"
+
+  /complexes/{id}:
+    get:
+      operationId: getComplex
+      tags: [complexes]
+      summary: Get a complex by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Complex
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Complex"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateComplex
+      tags: [complexes]
+      summary: Update a complex
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ComplexUpdate"
+      responses:
+        "200":
+          description: Updated complex
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Complex"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteComplex
+      tags: [complexes]
+      summary: Delete a complex
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # RECYCLABLE MATERIALS
+  /materials:
+    get:
+      operationId: listMaterials
+      tags: [materials]
+      summary: List all recyclable materials
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of materials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MaterialListResponse"
+    post:
+      operationId: createMaterial
+      tags: [materials]
+      summary: Create a recyclable material
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MaterialInput"
+      responses:
+        "201":
+          description: Material created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Material"
+
+  /materials/{id}:
+    get:
+      operationId: getMaterial
+      tags: [materials]
+      summary: Get a material by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Material
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Material"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateMaterial
+      tags: [materials]
+      summary: Update a material
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MaterialUpdate"
+      responses:
+        "200":
+          description: Updated material
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Material"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteMaterial
+      tags: [materials]
+      summary: Delete a material
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # COLLECTION EVENTS
+  /events:
+    get:
+      operationId: listEvents
+      tags: [events]
+      summary: List all collection events
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: complexId
+          in: query
+          schema:
+            type: integer
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of events
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventListResponse"
+    post:
+      operationId: createEvent
+      tags: [events]
+      summary: Create a collection event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EventInput"
+      responses:
+        "201":
+          description: Event created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+
+  /events/{id}:
+    get:
+      operationId: getEvent
+      tags: [events]
+      summary: Get an event by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Event
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateEvent
+      tags: [events]
+      summary: Update an event
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EventUpdate"
+      responses:
+        "200":
+          description: Updated event
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteEvent
+      tags: [events]
+      summary: Delete an event
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # RECYCLING RECORDS
+  /records:
+    get:
+      operationId: listRecords
+      tags: [records]
+      summary: List all recycling records
+      parameters:
+        - name: residentId
+          in: query
+          schema:
+            type: integer
+        - name: complexId
+          in: query
+          schema:
+            type: integer
+        - name: materialId
+          in: query
+          schema:
+            type: integer
+        - name: dateFrom
+          in: query
+          schema:
+            type: string
+        - name: dateTo
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of records
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecordListResponse"
+    post:
+      operationId: createRecord
+      tags: [records]
+      summary: Create a recycling record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecordInput"
+      responses:
+        "201":
+          description: Record created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecyclingRecord"
+
+  /records/{id}:
+    get:
+      operationId: getRecord
+      tags: [records]
+      summary: Get a record by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecyclingRecord"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateRecord
+      tags: [records]
+      summary: Update a record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecordUpdate"
+      responses:
+        "200":
+          description: Updated record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecyclingRecord"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteRecord
+      tags: [records]
+      summary: Delete a record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /records/total-kg:
+    get:
+      operationId: getTotalKg
+      tags: [records]
+      summary: Get total kilograms recycled
+      parameters:
+        - name: complexId
+          in: query
+          schema:
+            type: integer
+        - name: materialId
+          in: query
+          schema:
+            type: integer
+        - name: residentId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Total kg
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TotalKgResponse"
+
+  # DASHBOARD
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [dashboard]
+      summary: Get dashboard summary statistics
+      responses:
+        "200":
+          description: Dashboard statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  /dashboard/monthly-stats:
+    get:
+      operationId: getDashboardMonthlyStats
+      tags: [dashboard]
+      summary: Get monthly recycling statistics
+      parameters:
+        - name: year
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Monthly stats
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MonthlyStatItem"
+
+  /dashboard/recent-activity:
+    get:
+      operationId: getDashboardRecentActivity
+      tags: [dashboard]
+      summary: Get recent recycling activity
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Recent activity
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityItem"
+
+  /dashboard/material-breakdown:
+    get:
+      operationId: getDashboardMaterialBreakdown
+      tags: [dashboard]
+      summary: Get kg recycled by material
+      responses:
+        "200":
+          description: Material breakdown
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MaterialBreakdownItem"
+
+  # REPORTS
+  /reports/summary:
+    get:
+      operationId: getReportSummary
+      tags: [reports]
+      summary: Get summary report data
+      parameters:
+        - name: dateFrom
+          in: query
+          schema:
+            type: string
+        - name: dateTo
+          in: query
+          schema:
+            type: string
+        - name: materialId
+          in: query
+          schema:
+            type: integer
+        - name: residentId
+          in: query
+          schema:
+            type: integer
+        - name: complexId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Report summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportSummary"
+
+  # PROFILE
+  /profile:
+    get:
+      operationId: getProfile
+      tags: [profile]
+      summary: Get current user profile
+      responses:
+        "200":
+          description: Profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    patch:
+      operationId: updateProfile
+      tags: [profile]
+      summary: Update current user profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileUpdate"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /profile/change-password:
+    post:
+      operationId: changePassword
+      tags: [profile]
+      summary: Change password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePasswordInput"
+      responses:
+        "200":
+          description: Password changed
+
+  /profile/photo:
+    post:
+      operationId: uploadProfilePhoto
+      tags: [profile]
+      summary: Upload profile photo URL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PhotoInput"
+      responses:
+        "200":
+          description: Photo updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +850,580 @@ components:
       required:
         - status
 
+    # AUTH
+    LoginInput:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+
+    AuthResponse:
+      type: object
+      required: [user, token]
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        token:
+          type: string
+
+    # USER
+    User:
+      type: object
+      required: [id, fullName, documentNumber, email, role, status, createdAt]
+      properties:
+        id:
+          type: integer
+        fullName:
+          type: string
+        documentNumber:
+          type: string
+        phone:
+          type: ["string", "null"]
+        email:
+          type: string
+        apartment:
+          type: ["string", "null"]
+        complexId:
+          type: ["integer", "null"]
+        complexName:
+          type: ["string", "null"]
+        role:
+          type: string
+          enum: [admin, resident]
+        status:
+          type: string
+          enum: [active, inactive]
+        photoUrl:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    UserInput:
+      type: object
+      required: [fullName, documentNumber, email, role, status, password]
+      properties:
+        fullName:
+          type: string
+        documentNumber:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        apartment:
+          type: string
+        complexId:
+          type: integer
+        role:
+          type: string
+          enum: [admin, resident]
+        status:
+          type: string
+          enum: [active, inactive]
+        password:
+          type: string
+
+    UserUpdate:
+      type: object
+      properties:
+        fullName:
+          type: string
+        documentNumber:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        apartment:
+          type: string
+        complexId:
+          type: ["integer", "null"]
+        role:
+          type: string
+          enum: [admin, resident]
+        status:
+          type: string
+          enum: [active, inactive]
+
+    UserListResponse:
+      type: object
+      required: [data, total, page, pageSize]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/User"
+        total:
+          type: integer
+        page:
+          type: integer
+        pageSize:
+          type: integer
+
+    # COMPLEX
+    Complex:
+      type: object
+      required: [id, name, address, neighborhood, status, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        address:
+          type: string
+        neighborhood:
+          type: string
+        administrator:
+          type: ["string", "null"]
+        phone:
+          type: ["string", "null"]
+        email:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [active, inactive]
+        createdAt:
+          type: string
+
+    ComplexInput:
+      type: object
+      required: [name, address, neighborhood, status]
+      properties:
+        name:
+          type: string
+        address:
+          type: string
+        neighborhood:
+          type: string
+        administrator:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive]
+
+    ComplexUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        address:
+          type: string
+        neighborhood:
+          type: string
+        administrator:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive]
+
+    ComplexListResponse:
+      type: object
+      required: [data, total, page, pageSize]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Complex"
+        total:
+          type: integer
+        page:
+          type: integer
+        pageSize:
+          type: integer
+
+    # MATERIAL
+    Material:
+      type: object
+      required: [id, name, description, recyclingInstructions, binColor, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        recyclingInstructions:
+          type: string
+        binColor:
+          type: string
+        createdAt:
+          type: string
+
+    MaterialInput:
+      type: object
+      required: [name, description, recyclingInstructions, binColor]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        recyclingInstructions:
+          type: string
+        binColor:
+          type: string
+
+    MaterialUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        recyclingInstructions:
+          type: string
+        binColor:
+          type: string
+
+    MaterialListResponse:
+      type: object
+      required: [data, total, page, pageSize]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Material"
+        total:
+          type: integer
+        page:
+          type: integer
+        pageSize:
+          type: integer
+
+    # EVENT
+    Event:
+      type: object
+      required: [id, eventName, complexId, date, hour, responsiblePerson, location, status, createdAt]
+      properties:
+        id:
+          type: integer
+        eventName:
+          type: string
+        complexId:
+          type: integer
+        complexName:
+          type: ["string", "null"]
+        date:
+          type: string
+        hour:
+          type: string
+        responsiblePerson:
+          type: string
+        location:
+          type: string
+        description:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [scheduled, completed, cancelled]
+        createdAt:
+          type: string
+
+    EventInput:
+      type: object
+      required: [eventName, complexId, date, hour, responsiblePerson, location, status]
+      properties:
+        eventName:
+          type: string
+        complexId:
+          type: integer
+        date:
+          type: string
+        hour:
+          type: string
+        responsiblePerson:
+          type: string
+        location:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [scheduled, completed, cancelled]
+
+    EventUpdate:
+      type: object
+      properties:
+        eventName:
+          type: string
+        complexId:
+          type: integer
+        date:
+          type: string
+        hour:
+          type: string
+        responsiblePerson:
+          type: string
+        location:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [scheduled, completed, cancelled]
+
+    EventListResponse:
+      type: object
+      required: [data, total, page, pageSize]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Event"
+        total:
+          type: integer
+        page:
+          type: integer
+        pageSize:
+          type: integer
+
+    # RECYCLING RECORD
+    RecyclingRecord:
+      type: object
+      required: [id, residentId, complexId, materialId, weightKg, date, createdAt]
+      properties:
+        id:
+          type: integer
+        residentId:
+          type: integer
+        residentName:
+          type: ["string", "null"]
+        complexId:
+          type: integer
+        complexName:
+          type: ["string", "null"]
+        materialId:
+          type: integer
+        materialName:
+          type: ["string", "null"]
+        weightKg:
+          type: number
+        date:
+          type: string
+        observation:
+          type: ["string", "null"]
+        responsibleUserId:
+          type: ["integer", "null"]
+        responsibleUserName:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    RecordInput:
+      type: object
+      required: [residentId, complexId, materialId, weightKg, date]
+      properties:
+        residentId:
+          type: integer
+        complexId:
+          type: integer
+        materialId:
+          type: integer
+        weightKg:
+          type: number
+        date:
+          type: string
+        observation:
+          type: string
+        responsibleUserId:
+          type: integer
+
+    RecordUpdate:
+      type: object
+      properties:
+        residentId:
+          type: integer
+        complexId:
+          type: integer
+        materialId:
+          type: integer
+        weightKg:
+          type: number
+        date:
+          type: string
+        observation:
+          type: string
+        responsibleUserId:
+          type: integer
+
+    RecordListResponse:
+      type: object
+      required: [data, total, page, pageSize, totalKg]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/RecyclingRecord"
+        total:
+          type: integer
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        totalKg:
+          type: number
+
+    TotalKgResponse:
+      type: object
+      required: [totalKg]
+      properties:
+        totalKg:
+          type: number
+
+    # DASHBOARD
+    DashboardStats:
+      type: object
+      required: [totalResidents, totalComplexes, totalEvents, totalRecords, totalMaterials, totalKgRecycled]
+      properties:
+        totalResidents:
+          type: integer
+        totalComplexes:
+          type: integer
+        totalEvents:
+          type: integer
+        totalRecords:
+          type: integer
+        totalMaterials:
+          type: integer
+        totalKgRecycled:
+          type: number
+
+    MonthlyStatItem:
+      type: object
+      required: [month, year, totalKg, totalRecords]
+      properties:
+        month:
+          type: integer
+        year:
+          type: integer
+        monthLabel:
+          type: string
+        totalKg:
+          type: number
+        totalRecords:
+          type: integer
+
+    ActivityItem:
+      type: object
+      required: [id, type, description, createdAt]
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+        description:
+          type: string
+        residentName:
+          type: ["string", "null"]
+        materialName:
+          type: ["string", "null"]
+        weightKg:
+          type: ["number", "null"]
+        createdAt:
+          type: string
+
+    MaterialBreakdownItem:
+      type: object
+      required: [materialId, materialName, binColor, totalKg, totalRecords]
+      properties:
+        materialId:
+          type: integer
+        materialName:
+          type: string
+        binColor:
+          type: string
+        totalKg:
+          type: number
+        totalRecords:
+          type: integer
+
+    # REPORTS
+    ReportSummary:
+      type: object
+      required: [totalKg, totalRecords, byMaterial, byComplex, byResident, records]
+      properties:
+        totalKg:
+          type: number
+        totalRecords:
+          type: integer
+        byMaterial:
+          type: array
+          items:
+            $ref: "#/components/schemas/MaterialBreakdownItem"
+        byComplex:
+          type: array
+          items:
+            $ref: "#/components/schemas/ComplexBreakdownItem"
+        byResident:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResidentBreakdownItem"
+        records:
+          type: array
+          items:
+            $ref: "#/components/schemas/RecyclingRecord"
+
+    ComplexBreakdownItem:
+      type: object
+      required: [complexId, complexName, totalKg, totalRecords]
+      properties:
+        complexId:
+          type: integer
+        complexName:
+          type: string
+        totalKg:
+          type: number
+        totalRecords:
+          type: integer
+
+    ResidentBreakdownItem:
+      type: object
+      required: [residentId, residentName, totalKg, totalRecords]
+      properties:
+        residentId:
+          type: integer
+        residentName:
+          type: string
+        totalKg:
+          type: number
+        totalRecords:
+          type: integer
+
+    # PROFILE
+    ProfileUpdate:
+      type: object
+      properties:
+        fullName:
+          type: string
+        phone:
+          type: string
+        apartment:
+          type: string
+        email:
+          type: string
+
+    ChangePasswordInput:
+      type: object
+      required: [currentPassword, newPassword]
+      properties:
+        currentPassword:
+          type: string
+        newPassword:
+          type: string
+
+    PhotoInput:
+      type: object
+      required: [photoUrl]
+      properties:
+        photoUrl:
+          type: string

@@ -1,0 +1,296 @@
+Build a complete full-stack web application called "EcoRecicla Bogotá".
+
+This is a university software engineering final project. The application is a Recycling Management System for Residential Complexes in Bogotá, Colombia.
+
+The objective is to help administrators manage recycling activities, recyclable materials, residents, collection events, recycling records, and environmental reports.
+
+Create a modern professional web application similar to an enterprise management system.
+
+========================================================
+TECHNOLOGY
+========================================================
+
+Use React for the frontend.
+
+Use Node.js + Express for the backend.
+
+Use PostgreSQL as the database.
+
+Use Tailwind CSS for a modern interface.
+
+Use Chart.js for dashboard statistics.
+
+Generate clean, modular and maintainable code.
+
+========================================================
+AUTHENTICATION
+========================================================
+
+Create authentication with login and logout.
+
+Administrator role.
+
+Resident role.
+
+Session management.
+
+Protected routes.
+
+========================================================
+HOME DASHBOARD
+========================================================
+
+Create a beautiful dashboard containing:
+
+Total Residents
+
+Total Residential Complexes
+
+Total Recycling Events
+
+Total Recycling Records
+
+Total Materials
+
+Monthly Recycling Statistics
+
+Recent Activity
+
+Cards with icons.
+
+Charts.
+
+Quick actions.
+
+========================================================
+MODULE 1
+USERS
+========================================================
+
+CRUD
+
+Fields:
+
+Full Name
+
+Document Number
+
+Phone
+
+Email
+
+Apartment
+
+Residential Complex
+
+Role
+
+Status
+
+========================================================
+MODULE 2
+RESIDENTIAL COMPLEXS
+========================================================
+
+CRUD
+
+Fields
+
+Name
+
+Address
+
+Neighborhood
+
+Administrator
+
+Phone
+
+Email
+
+Status
+
+========================================================
+MODULE 3
+RECYCLABLE MATERIALS
+========================================================
+
+CRUD
+
+Plastic
+
+Paper
+
+Glass
+
+Cardboard
+
+Metal
+
+Organic Waste
+
+Electronic Waste
+
+Each material must include:
+
+Description
+
+Recycling Instructions
+
+Recommended Bin Color
+
+========================================================
+MODULE 4
+COLLECTION EVENTS
+========================================================
+
+CRUD
+
+Fields
+
+Event Name
+
+Residential Complex
+
+Date
+
+Hour
+
+Responsible Person
+
+Location
+
+Description
+
+Status
+
+========================================================
+MODULE 5
+RECYCLING RECORDS
+========================================================
+
+CRUD
+
+Resident
+
+Residential Complex
+
+Material
+
+Weight in Kg
+
+Date
+
+Observation
+
+Responsible User
+
+Automatically calculate total kilograms recycled.
+
+========================================================
+MODULE 6
+REPORTS
+========================================================
+
+Generate reports by:
+
+Date
+
+Material
+
+Resident
+
+Residential Complex
+
+Include charts.
+
+Export to PDF.
+
+Export to Excel.
+
+========================================================
+MODULE 7
+PROFILE
+========================================================
+
+Edit Profile
+
+Change Password
+
+Upload Profile Photo
+
+========================================================
+SEARCH
+========================================================
+
+Global search.
+
+Filters.
+
+Sorting.
+
+Pagination.
+
+========================================================
+DESIGN
+========================================================
+
+Professional admin dashboard.
+
+Responsive.
+
+Modern sidebar.
+
+Top navigation bar.
+
+Professional tables.
+
+Professional forms.
+
+Modal windows.
+
+Icons.
+
+Green and blue color palette.
+
+Rounded cards.
+
+Animations.
+
+Notifications.
+
+Confirmation dialogs.
+
+Loading animations.
+
+========================================================
+DATABASE
+========================================================
+
+Create all database tables with relationships.
+
+Populate the application with sample data.
+
+========================================================
+README
+========================================================
+
+Generate a complete README explaining:
+
+Installation
+
+Dependencies
+
+How to run locally
+
+Project structure
+
+========================================================
+FINAL GOAL
+========================================================
+
+Generate a fully functional university TRL-5 prototype ready to upload to GitHub.
+
+Everything must work correctly.
+
+The application should look like a real enterprise software product.

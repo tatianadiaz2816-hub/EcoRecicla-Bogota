@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "EcoRecicla Bogotá"
+version = "1.0.0"
+id = "artifacts/ecorecicla"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25960
+
+[services.development]
+run = "pnpm --filter @workspace/ecorecicla run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/ecorecicla", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/ecorecicla/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25960"
+BASE_PATH = "/"
