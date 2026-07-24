@@ -155,29 +155,85 @@ export default function Dashboard() {
             <CardTitle className="text-base">Por Material</CardTitle>
             <CardDescription className="text-xs">Distribución del total reciclado</CardDescription>
           </CardHeader>
-          <CardContent className="pt-0">
+          <CardContent className="pt-0 pb-4">
             {breakdownLoading ? (
-              <Skeleton className="h-[260px] w-full" />
+              <Skeleton className="h-[300px] w-full" />
             ) : !materialBreakdown?.length ? (
-              <div className="h-[260px] flex flex-col items-center justify-center text-muted-foreground">
+              <div className="h-[300px] flex flex-col items-center justify-center text-muted-foreground">
                 <Recycle className="h-10 w-10 mb-2 opacity-20" />
                 <p className="text-sm">Sin datos disponibles</p>
               </div>
-            ) : (
-              <div className="h-[260px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={materialBreakdown} cx="50%" cy="45%" innerRadius={55} outerRadius={90} paddingAngle={3} dataKey="totalKg" nameKey="materialName">
-                      {materialBreakdown.map((entry, idx) => (
-                        <Cell key={idx} fill={getBinColor(entry.binColor)} stroke="transparent" />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(v: number) => [`${v.toFixed(2)} kg`, "Peso"]} contentStyle={{ borderRadius: "8px", fontSize: "12px" }} />
-                    <Legend verticalAlign="bottom" height={30} iconType="circle" iconSize={8} formatter={(v) => <span style={{ fontSize: 11 }}>{v}</span>} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            )}
+            ) : (() => {
+              const totalKgAll = materialBreakdown.reduce((s, m) => s + m.totalKg, 0);
+              return (
+                <>
+                  {/* Donut chart — shorter height, no built-in legend */}
+                  <div className="h-[170px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+                        <Pie
+                          data={materialBreakdown}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={48}
+                          outerRadius={78}
+                          paddingAngle={2}
+                          dataKey="totalKg"
+                          nameKey="materialName"
+                          startAngle={90}
+                          endAngle={-270}
+                        >
+                          {materialBreakdown.map((entry, idx) => (
+                            <Cell key={idx} fill={getBinColor(entry.binColor)} stroke="transparent" />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          formatter={(v: number, _name: string, props: any) => {
+                            const pct = totalKgAll > 0 ? ((v / totalKgAll) * 100).toFixed(1) : "0";
+                            return [`${v.toFixed(2)} kg (${pct}%)`, "Peso"];
+                          }}
+                          contentStyle={{ borderRadius: "8px", fontSize: "12px", border: "1px solid hsl(var(--border))" }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  {/* Custom legend — full control over wrapping and overflow */}
+                  <div className="mt-3 space-y-1.5 px-1">
+                    {[...materialBreakdown]
+                      .sort((a, b) => b.totalKg - a.totalKg)
+                      .map((m) => {
+                        const pct = totalKgAll > 0 ? ((m.totalKg / totalKgAll) * 100).toFixed(1) : "0";
+                        const color = getBinColor(m.binColor);
+                        return (
+                          <div key={m.materialId} className="flex items-center gap-2 min-w-0">
+                            {/* Color dot */}
+                            <span
+                              className="w-2.5 h-2.5 rounded-full shrink-0"
+                              style={{ background: color }}
+                            />
+                            {/* Material name — truncates if needed */}
+                            <span className="text-xs text-foreground flex-1 truncate leading-tight">
+                              {m.materialName}
+                            </span>
+                            {/* Percentage pill */}
+                            <span
+                              className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0 tabular-nums"
+                              style={{ background: `${color}20`, color }}
+                            >
+                              {pct}%
+                            </span>
+                            {/* kg value */}
+                            <span className="text-xs text-muted-foreground shrink-0 tabular-nums w-14 text-right">
+                              {m.totalKg.toFixed(1)} kg
+                            </span>
+                          </div>
+                        );
+                      })}
+                  </div>
+                </>
+              );
+            })()}
           </CardContent>
         </Card>
       </div>
