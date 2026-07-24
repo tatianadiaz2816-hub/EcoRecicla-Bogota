@@ -110,7 +110,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <Link href={item.href} className="block" onClick={() => setMobileMenuOpen(false)}>
         <button
           className={cn(
-            "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 group",
+            "w-full flex items-center gap-3 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-150 group",
             active
               ? "bg-primary/20 text-primary border-l-2 border-primary"
               : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground border-l-2 border-transparent"
@@ -128,8 +128,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
     <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground">
       {/* Logo */}
       <div className={cn(
-        "flex items-center border-b border-sidebar-border h-16 shrink-0",
-        col ? "justify-center px-3" : "px-5 gap-3"
+        "flex items-center border-b border-sidebar-border h-14 shrink-0",
+        col ? "justify-center px-3" : "px-4 gap-3"
       )}>
         {col ? (
           <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center">
@@ -155,11 +155,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* Nav */}
-      <div className={cn("flex-1 overflow-y-auto py-4 space-y-5", col ? "px-2" : "px-3")}>
+      <div
+        className={cn("flex-1 overflow-y-auto py-2.5 space-y-3 [&::-webkit-scrollbar]:hidden", col ? "px-2" : "px-3")}
+        style={{ scrollbarWidth: "none" }}
+      >
         {NAV_SECTIONS.map((section) => (
           <div key={section.label}>
             {!col && (
-              <p className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/35 select-none">
+              <p className="px-3 mb-1 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/35 select-none">
                 {section.label}
               </p>
             )}
@@ -175,7 +178,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {isAdmin && (
           <div>
             {!col && (
-              <p className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/35 select-none">
+              <p className="px-3 mb-1 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/35 select-none">
                 {ADMIN_SECTION.label}
               </p>
             )}
@@ -189,7 +192,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* Bottom: Notifications + User + profile + logout */}
-      <div className={cn("border-t border-sidebar-border py-3 shrink-0", col ? "px-2" : "px-3")}>
+      <div className={cn("border-t border-sidebar-border py-2 shrink-0", col ? "px-2" : "px-3")}>
         {col ? (
           <div className="flex flex-col items-center gap-2">
             {/* Notifications */}
@@ -224,16 +227,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </div>
         ) : (
           <>
-            <div className="flex items-center gap-3 px-2 py-2 mb-2 rounded-lg bg-sidebar-accent/60">
-              <Avatar className="h-8 w-8 shrink-0">
+            <div className="flex items-center gap-2.5 px-2 py-1.5 mb-1.5 rounded-lg bg-sidebar-accent/60">
+              <Avatar className="h-7 w-7 shrink-0">
                 <AvatarImage src={user?.photoUrl || ""} />
-                <AvatarFallback className="bg-primary/20 text-primary text-xs font-bold">
+                <AvatarFallback className="bg-primary/20 text-primary text-[10px] font-bold">
                   {user?.fullName?.charAt(0) || "U"}
                 </AvatarFallback>
               </Avatar>
               <div className="overflow-hidden flex-1 min-w-0">
-                <p className="text-xs font-semibold text-sidebar-foreground truncate">{user?.fullName}</p>
-                <p className="text-[10px] text-sidebar-foreground/50">
+                <p className="text-xs font-semibold text-sidebar-foreground truncate leading-tight">{user?.fullName}</p>
+                <p className="text-[10px] text-sidebar-foreground/50 leading-tight">
                   {user?.role ? ROLE_LABELS[user.role] : ""}
                 </p>
               </div>
@@ -241,11 +244,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
             {/* Notifications row */}
             <NotificationsDropdown collapsed={false} />
             <Link href="/profile" className="block" onClick={() => setMobileMenuOpen(false)}>
-              <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors">
+              <button className="w-full flex items-center gap-3 px-3 py-1.5 rounded-lg text-xs font-medium text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors">
                 <UserCircle className="w-4 h-4 shrink-0" /> Mi Perfil
               </button>
             </Link>
-            <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors">
+            <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-1.5 rounded-lg text-xs font-medium text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors">
               <LogOut className="w-4 h-4 shrink-0" /> Cerrar sesión
             </button>
           </>
