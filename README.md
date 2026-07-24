@@ -1,6 +1,6 @@
 # EcoRecicla Bogotá
 
-Apicacion web para la gestión del reciclaje en conjuntos residenciales de Bogotá.
+Aplicacion web para la gestión del reciclaje en conjuntos residenciales de Bogotá.
 Proyecto de grado de Ingeniería de Sistemas
 Universidad Nacional Abierta y a Distancia – UNAD.
 
