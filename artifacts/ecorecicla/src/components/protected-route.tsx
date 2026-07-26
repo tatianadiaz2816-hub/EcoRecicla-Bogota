@@ -5,11 +5,7 @@ import { Loader2 } from "lucide-react";
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
-  const { data: user, isLoading, isError } = useGetMe({
-    query: {
-      retry: false,
-    }
-  });
+  const { data: user, isLoading, isError } = useGetMe();
 
   useEffect(() => {
     if (isError) {
