@@ -79,7 +79,7 @@ export default function Login() {
             ))}
           </div>
           <div className="space-y-0.5">
-            <p className="text-[11px] text-emerald-300 font-medium">© 2025 EcoRecicla Bogotá</p>
+            <p className="text-[11px] text-emerald-300 font-medium">© 2026 EcoRecicla Bogotá</p>
             <p className="text-[10px] text-emerald-400 leading-relaxed">
               Proyecto de Grado · Ingeniería de Sistemas<br />
               Universidad Nacional Abierta y a Distancia – UNAD<br />
