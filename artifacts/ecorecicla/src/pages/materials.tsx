@@ -48,13 +48,15 @@ const BIN_COLOR_LABELS: Record<string, string> = {
 
 export default function Materials() {
   const [search, setSearch] = useState("");
+  const [binColorFilter, setBinColorFilter] = useState("");
   const [page, setPage] = useState(1);
   const pageSize = 12;
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   const { data, isLoading } = useListMaterials({ search: search || undefined, page, pageSize });
-  const materials = data?.data || [];
+  const allMaterials = data?.data || [];
+  const materials = binColorFilter ? allMaterials.filter(m => m.binColor === binColorFilter) : allMaterials;
   const total = data?.total || 0;
   const totalPages = Math.ceil(total / pageSize);
 
@@ -115,11 +117,32 @@ export default function Materials() {
         <Button onClick={openCreate} className="gap-2 shadow-sm"><Plus className="w-4 h-4" /> Agregar Material</Button>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input placeholder="Buscar materiales..." className="pl-9" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
         </div>
+        <Select value={binColorFilter || "all"} onValueChange={(v) => { setBinColorFilter(v === "all" ? "" : v); setPage(1); }}>
+          <SelectTrigger className="w-48">
+            <SelectValue placeholder="Todos los contenedores" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos los contenedores</SelectItem>
+            {AVAILABLE_COLORS.map(c => (
+              <SelectItem key={c.id} value={c.id}>
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full shrink-0" style={{ background: BIN_HEX[c.id] }} />
+                  {c.name}
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {(search || binColorFilter) && (
+          <Button variant="ghost" size="sm" className="text-muted-foreground h-9" onClick={() => { setSearch(""); setBinColorFilter(""); setPage(1); }}>
+            Limpiar
+          </Button>
+        )}
         {total > 0 && <span className="text-xs text-muted-foreground">{total} material{total !== 1 ? "es" : ""}</span>}
       </div>
 
@@ -143,10 +166,10 @@ export default function Materials() {
             <Package className="w-12 h-12 text-muted-foreground opacity-20 mb-4" />
             <h3 className="text-base font-semibold text-foreground mb-1">No se encontraron materiales</h3>
             <p className="text-muted-foreground text-sm max-w-xs mb-4">
-              {search ? `No hay resultados para "${search}".` : "Comience agregando los materiales reciclables del programa."}
+              {search || binColorFilter ? `No hay resultados para los filtros aplicados.` : "Comience agregando los materiales reciclables del programa."}
             </p>
-            {search ? (
-              <Button variant="outline" size="sm" onClick={() => setSearch("")}>Limpiar búsqueda</Button>
+            {(search || binColorFilter) ? (
+              <Button variant="outline" size="sm" onClick={() => { setSearch(""); setBinColorFilter(""); setPage(1); }}>Limpiar filtros</Button>
             ) : (
               <Button size="sm" onClick={openCreate}>Agregar primer material</Button>
             )}
