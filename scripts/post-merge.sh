@@ -1,4 +1,10 @@
 #!/bin/bash
 set -e
-pnpm install --frozen-lockfile
-pnpm --filter db push
+
+echo "==> Installing dependencies..."
+pnpm install --frozen-lockfile=false
+
+echo "==> Pushing DB schema..."
+pnpm --filter @workspace/db run push-force
+
+echo "==> Post-merge setup complete."
