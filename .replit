@@ -18,3 +18,8 @@ externalPort = 3000
 [[ports]]
 localPort = 25960
 externalPort = 80
+
+[deployment]
+deploymentTarget = "autoscale"
+run = ["node", "--enable-source-maps", "artifacts/api-server/dist/index.mjs"]
+build = ["pnpm", "run", "build"]
